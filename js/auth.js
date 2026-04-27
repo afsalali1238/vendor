@@ -16,15 +16,6 @@ import { supabase } from '/js/supabase.js';
  * Returns the current user object if authenticated.
  */
 export async function requireVendorAuth() {
-  // DEMO MODE: Instant bypass on localhost
-  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-    return {
-      id: 'demo-vendor-123',
-      phone: '+971500000000',
-      user_metadata: { company_name: 'Demo Transport LLC' }
-    };
-  }
-
   const { data: { session }, error } = await supabase.auth.getSession();
 
   if (error || !session) {

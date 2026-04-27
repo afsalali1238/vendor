@@ -6,14 +6,14 @@
 // ================================================================
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { CONFIG } from '/js/config.js';
 
 // ── CLIENT INIT ──────────────────────────────────────────────────
-// Values injected at deploy time by Vercel environment variables.
-// For local dev: create .env and run with a local env loader.
-const SUPABASE_URL  = window.__ENV?.SUPABASE_URL  || 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_KEY  = window.__ENV?.SUPABASE_KEY  || 'YOUR_ANON_KEY';
+const SUPABASE_URL = CONFIG.SUPABASE_URL;
+const SUPABASE_KEY = CONFIG.SUPABASE_KEY;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 
 // ── ERROR HELPER ─────────────────────────────────────────────────
 function handle(result) {
@@ -96,10 +96,7 @@ const MOCK_DATA = {
 };
 
 function isDemo() {
-  // If we are on localhost or Vercel and haven't configured Supabase, assume demo
-  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('vercel.app')) {
-    return true;
-  }
+  // Demo mode disabled. We are in Production Full Flow.
   return false;
 }
 
