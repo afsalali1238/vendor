@@ -96,9 +96,14 @@ const MOCK_DATA = {
 };
 
 function isDemo() {
-  // Demo mode disabled. We are in Production Full Flow.
-  return false;
+  // MVP testing: bypass auth but still use real Supabase data when possible.
+  // Set to false once Supabase Auth (OTP/magic-link) is fully configured.
+  return true;
 }
+
+// The seed vendor ID from supabase/seed.sql
+const DEMO_VENDOR_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+
 
 // ================================================================
 // VENDOR OPERATIONS
@@ -106,14 +111,16 @@ function isDemo() {
 
 /** Get the current vendor's full profile */
 export async function getVendorProfile() {
-  if (isDemo()) return MOCK_DATA.vendor;
+  if (isDemo()) {
+    try {
+      const result = await supabase.from('vendors').select('*').eq('id', DEMO_VENDOR_ID).single();
+      if (result.data) return result.data;
+    } catch (e) { /* fallback to mock */ }
+    return MOCK_DATA.vendor;
+  }
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
-  const result = await supabase
-    .from('vendors')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  const result = await supabase.from('vendors').select('*').eq('id', user.id).single();
   return handle(result);
 }
 
@@ -134,19 +141,18 @@ export async function updateVendorProfile(fields) {
 // RFQ OPERATIONS (vendor_rfqs table)
 // ================================================================
 
-/** Get all RFQs for the current vendor, with joined job details */
+/** Get all RFQs for the current vendor — in demo, get jobs with status 'enquiry' */
 export async function getVendorRFQs() {
-  if (isDemo()) return MOCK_DATA.rfqs;
+  if (isDemo()) {
+    try {
+      const result = await supabase.from('jobs').select('*').eq('vendor_id', DEMO_VENDOR_ID).in('status', ['enquiry','quoted']).order('created_at', { ascending: false });
+      if (result.data && result.data.length > 0) return result.data;
+    } catch (e) { /* fallback */ }
+    return MOCK_DATA.rfqs;
+  }
   const result = await supabase
     .from('vendor_rfqs')
-    .select(`
-      *,
-      jobs:job_id (
-        job_code, service_type, origin, destination,
-        pickup_date, cargo_type, equipment_type,
-        client_company, notes, quoted_price
-      )
-    `)
+    .select(`*, jobs:job_id (job_code, service_type, origin, destination, pickup_date, cargo_type, equipment_type, client_company, notes, quoted_price)`)
     .order('created_at', { ascending: false });
   return handle(result);
 }
@@ -191,7 +197,13 @@ export async function createJobEnquiry(payload) {
 
 /** Get all active jobs for current vendor */
 export async function getActiveJobs() {
-  if (isDemo()) return MOCK_DATA.jobs;
+  if (isDemo()) {
+    try {
+      const result = await supabase.from('jobs').select('*').eq('vendor_id', DEMO_VENDOR_ID).not('status', 'in', '("enquiry","quoted","rejected","paid")').order('created_at', { ascending: false });
+      if (result.data && result.data.length > 0) return result.data;
+    } catch (e) { /* fallback */ }
+    return MOCK_DATA.jobs;
+  }
   const result = await supabase
     .from('jobs')
     .select('*')
@@ -200,9 +212,15 @@ export async function getActiveJobs() {
   return handle(result);
 }
 
-/** Get payment history (invoiced + paid jobs) */
+/** Get payment history (invoiced + paid + delivered jobs) */
 export async function getPaymentJobs() {
-  if (isDemo()) return MOCK_DATA.jobs.filter(j => ['invoiced', 'paid'].includes(j.status));
+  if (isDemo()) {
+    try {
+      const result = await supabase.from('jobs').select('*').eq('vendor_id', DEMO_VENDOR_ID).in('status', ['delivered','invoiced','paid']).order('updated_at', { ascending: false });
+      if (result.data && result.data.length > 0) return result.data;
+    } catch (e) { /* fallback */ }
+    return MOCK_DATA.jobs.filter(j => ['invoiced', 'paid'].includes(j.status));
+  }
   const result = await supabase
     .from('jobs')
     .select('*')
@@ -407,7 +425,13 @@ export async function saveClientEPOD(jobCode, signatureB64) {
 
 /** Get all drivers for the current vendor */
 export async function getVendorDrivers() {
-  if (isDemo()) return MOCK_DATA.drivers;
+  if (isDemo()) {
+    try {
+      const result = await supabase.from('vendor_drivers').select('*').eq('vendor_id', DEMO_VENDOR_ID).order('name');
+      if (result.data && result.data.length > 0) return result.data;
+    } catch (e) { /* fallback */ }
+    return MOCK_DATA.drivers;
+  }
   const result = await supabase
     .from('vendor_drivers')
     .select('*')
@@ -418,6 +442,13 @@ export async function getVendorDrivers() {
 /** Add a new driver */
 export async function addDriver(driver) {
   if (isDemo()) {
+    const result = await supabase
+      .from('vendor_drivers')
+      .insert({ ...driver, vendor_id: DEMO_VENDOR_ID })
+      .select()
+      .single();
+    if (result.data) return result.data;
+    // fallback
     const newDriver = { ...driver, id: 'd' + (MOCK_DATA.drivers.length + 1) };
     MOCK_DATA.drivers.push(newDriver);
     return newDriver;
