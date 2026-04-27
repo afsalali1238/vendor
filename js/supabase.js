@@ -96,8 +96,8 @@ const MOCK_DATA = {
 };
 
 function isDemo() {
-  // If we are on localhost and haven't configured Supabase, assume demo
-  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  // If we are on localhost or Vercel and haven't configured Supabase, assume demo
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('vercel.app')) {
     return true;
   }
   return false;
