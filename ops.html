@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kasper Ops Dashboard</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: #000; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
+    <div>
+      <h3 style="margin: 0; color: var(--gold);">Kasper Ops</h3>
+      <span style="font-size: 0.65rem; color: var(--text2);">INTERNAL ADMIN PORTAL</span>
+    </div>
+    <button id="logoutBtn" class="btn btn-outline" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem;">Logout</button>
+  </header>
+
+  <main class="container">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+      <div class="card" style="background: var(--surf2); padding: 1rem; text-align: center;">
+        <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Total Vendors</p>
+        <h2 style="margin: 0;" id="total-vendors">0</h2>
+      </div>
+      <div class="card" style="background: var(--surf2); padding: 1rem; text-align: center;">
+        <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Active Jobs</p>
+        <h2 style="margin: 0;" id="total-jobs">0</h2>
+      </div>
+      <div class="card" style="background: var(--surf2); padding: 1rem; text-align: center;">
+        <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Rev (AED)</p>
+        <h2 style="margin: 0;" id="total-rev">0</h2>
+      </div>
+    </div>
+
+    <section>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Vendors</h2>
+      </div>
+      <div id="vendor-list">
+        <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem;"></div>
+        <div class="skeleton" style="height: 60px;"></div>
+      </div>
+    </section>
+
+    <section style="margin-top: 3rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Recent Jobs</h2>
+      </div>
+      <div id="job-list">
+        <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem;"></div>
+        <div class="skeleton" style="height: 60px;"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/ops.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "Kasper Vendor OS",
+  "short_name": "Kasper",
+  "description": "SaaS Platform for Logistics SMEs",
+  "start_url": "/vendor.html",
+  "display": "standalone",
+  "background_color": "#0e0f0f",
+  "theme_color": "#F59E0B",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

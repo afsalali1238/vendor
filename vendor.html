@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kasper Vendor OS</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#F59E0B">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  
+  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
+    <h3 style="margin: 0;">Vendor Portal</h3>
+    <div style="display: flex; gap: 0.5rem;">
+      <button id="btn-settings" class="btn btn-outline" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem; border-color: var(--border); color: var(--text2);">⚙️</button>
+      <button id="btn-copy-link" class="btn btn-outline" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem; border-color: var(--teal); color: var(--teal);">Booking Link</button>
+      <button id="logoutBtn" class="btn btn-outline" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem;">Logout</button>
+    </div>
+  </header>
+
+  <main class="container" id="mainContent">
+    <!-- Tab 1: RFQs -->
+    <section id="tab-rfqs" class="tab-content" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>RFQs</h2>
+        <span class="badge badge-enquiry" id="rfq-count">0</span>
+      </div>
+      <div id="rfq-list">
+        <div class="skeleton" style="height: 100px; margin-bottom: 1rem;"></div>
+        <div class="skeleton" style="height: 100px;"></div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Active Jobs -->
+    <section id="tab-jobs" class="tab-content" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Active Jobs</h2>
+        <span class="badge badge-assigned" id="job-count">0</span>
+      </div>
+      <div id="job-list">
+        <div class="skeleton" style="height: 120px; margin-bottom: 1rem;"></div>
+      </div>
+    </section>
+
+    <!-- Tab 3: Fleet -->
+    <section id="tab-fleet" class="tab-content" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>My Fleet</h2>
+        <button id="addDriverBtn" class="btn btn-primary" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem;">+ Add Driver</button>
+      </div>
+      <div id="fleet-list">
+        <div class="skeleton" style="height: 80px; margin-bottom: 1rem;"></div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Payments -->
+    <section id="tab-payments" class="tab-content" style="display: none;">
+      <h2>Payments</h2>
+      
+      <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: var(--surf2);">
+        <div>
+          <p style="margin: 0; font-size: 0.875rem;">Outstanding</p>
+          <h3 style="margin: 0; color: var(--amber);" id="outstanding-amt">AED 0.00</h3>
+        </div>
+        <div>
+          <p style="margin: 0; font-size: 0.875rem;">Paid</p>
+          <h3 style="margin: 0; color: var(--green);" id="paid-amt">AED 0.00</h3>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 1.5rem; margin-bottom: 1rem;">Invoices</h3>
+      <div id="payment-list">
+        <div class="skeleton" style="height: 100px; margin-bottom: 1rem;"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="#rfqs" class="nav-item active" data-tab="tab-rfqs">
+      <span class="nav-icon">📡</span>
+      <span>RFQs</span>
+    </a>
+    <a href="#jobs" class="nav-item" data-tab="tab-jobs">
+      <span class="nav-icon">🚛</span>
+      <span>Active</span>
+    </a>
+    <a href="#fleet" class="nav-item" data-tab="tab-fleet">
+      <span class="nav-icon">🛻</span>
+      <span>Fleet</span>
+    </a>
+    <a href="#payments" class="nav-item" data-tab="tab-payments">
+      <span class="nav-icon">💰</span>
+      <span>Payments</span>
+    </a>
+  </nav>
+
+  <!-- Modals -->
+  <!-- Assign Driver Modal -->
+  <div id="assignDriverModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" id="closeAssignModal">&times;</button>
+      <h3>Assign Driver</h3>
+      <p>Select a driver for job <span id="assign-job-code" class="mono text-gold"></span></p>
+      <div id="assign-driver-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Driver buttons injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Driver Modal -->
+  <div id="addDriverModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" id="closeAddDriverModal">&times;</button>
+      <h3>Add New Driver</h3>
+      <form id="addDriverForm" style="margin-top: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Driver Name</label>
+          <input type="text" id="new-driver-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone (+971...)</label>
+          <input type="tel" id="new-driver-phone" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vehicle Plate</label>
+          <input type="text" id="new-driver-plate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vehicle Type</label>
+          <input type="text" id="new-driver-type" class="form-input" placeholder="e.g. 40ft Flatbed" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save Driver</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Company Settings</h3>
+        <button class="btn-close" id="closeSettingsModal">&times;</button>
+      </div>
+      <form id="settingsForm">
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" id="set-company" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">TRN (VAT Number)</label>
+          <input type="text" id="set-trn" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bank Name</label>
+          <input type="text" id="set-bank-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">IBAN</label>
+          <input type="text" id="set-iban" class="form-input" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save Settings</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="/js/vendor.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

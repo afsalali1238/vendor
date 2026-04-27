@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kasper MVP - Quick Links</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .link-group {
+      margin-bottom: 2rem;
+    }
+    .link-group h3 {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      color: var(--gold);
+    }
+    .link-card {
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .link-card:hover {
+      border-color: var(--teal);
+      transform: translateY(-2px);
+    }
+    .link-title {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 1.125rem;
+      margin-bottom: 0.25rem;
+    }
+    .link-desc {
+      font-size: 0.875rem;
+      color: var(--text2);
+    }
+    .badge-role {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+      background: var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); text-align: center;">
+    <img src="/icon.png" alt="Kasper Logo" style="height: 40px; margin-bottom: 0.5rem;">
+    <h2 style="margin: 0; color: var(--gold);">MVP Directory</h2>
+    <p style="margin: 0.5rem 0 0 0; color: var(--text2); font-size: 0.875rem;">Access all portals and test flows from here.</p>
+  </header>
+
+  <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    
+    <div class="link-group">
+      <h3>Core Portals</h3>
+      
+      <a href="/index.html" class="link-card" target="_blank">
+        <div><span class="link-title">Landing Page</span> <span class="badge-role">PUBLIC</span></div>
+        <div class="link-desc">The premium marketing site to attract vendors.</div>
+      </a>
+
+      <a href="/vendor.html" class="link-card" target="_blank" style="border-left: 4px solid var(--teal);">
+        <div><span class="link-title">Vendor Portal (Main)</span> <span class="badge-role">VENDOR</span></div>
+        <div class="link-desc">Manage RFQs, Active Jobs, Fleet, and Payments.</div>
+      </a>
+
+      <a href="/ops.html" class="link-card" target="_blank" style="border-left: 4px solid var(--gold);">
+        <div><span class="link-title">Ops Dashboard</span> <span class="badge-role">KASPER ADMIN</span></div>
+        <div class="link-desc">Internal dashboard to view all vendors, jobs, and revenue.</div>
+      </a>
+    </div>
+
+    <div class="link-group">
+      <h3>The A-Z Flow Links <span style="font-size:0.875rem; color:var(--text2); font-weight:normal;">(Pre-filled with Demo Data)</span></h3>
+      
+      <a href="/book.html?v=demo-vendor-123" class="link-card" target="_blank">
+        <div><span class="link-title">1. Client Booking Form</span> <span class="badge-role">CLIENT</span></div>
+        <div class="link-desc">Where clients submit RFQs to a specific vendor.</div>
+      </a>
+
+      <a href="/approve.html?job=KSP-7701" class="link-card" target="_blank">
+        <div><span class="link-title">2. Client Quote Approval</span> <span class="badge-role">CLIENT</span></div>
+        <div class="link-desc">The link clients receive to approve a quote.</div>
+      </a>
+
+      <a href="/driver.html?job=KSP-7701&t=demo" class="link-card" target="_blank">
+        <div><span class="link-title">3. Driver App</span> <span class="badge-role">DRIVER</span></div>
+        <div class="link-desc">No-login token app for drivers to start trips and capture ePOD.</div>
+      </a>
+
+      <a href="/track.html?job=KSP-7701" class="link-card" target="_blank">
+        <div><span class="link-title">4. Client Tracking & Sign-off</span> <span class="badge-role">CLIENT</span></div>
+        <div class="link-desc">Live GPS map and digital signature pad for delivery receipt.</div>
+      </a>
+    </div>
+
+    <div class="link-group">
+      <h3>Other Flows</h3>
+      
+      <a href="/onboard.html" class="link-card" target="_blank">
+        <div><span class="link-title">Vendor Onboarding</span> <span class="badge-role">VENDOR</span></div>
+        <div class="link-desc">OTP signup and profile completion flow.</div>
+      </a>
+
+      <a href="/decline.html" class="link-card" target="_blank">
+        <div><span class="link-title">Quote Declined</span> <span class="badge-role">CLIENT</span></div>
+        <div class="link-desc">The screen shown when a client rejects a quote.</div>
+      </a>
+    </div>
+
+  </main>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

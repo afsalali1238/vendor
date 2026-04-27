@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Live Tracking</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#F59E0B">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <style>
+    #map {
+      height: 300px;
+      width: 100%;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+    }
+    
+    /* Timeline styles */
+    .timeline {
+      position: relative;
+      padding-left: 20px;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border2);
+    }
+    .step {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    .step::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--surf2);
+      border: 2px solid var(--border);
+      z-index: 1;
+    }
+    .step.active::before {
+      background: var(--gold);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px var(--gold-dim);
+    }
+    .step.done::before {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+    .step-title {
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: var(--text2);
+    }
+    .step.active .step-title, .step.done .step-title {
+      color: var(--text);
+    }
+    .step-desc {
+      font-size: 0.75rem;
+      color: var(--text2);
+    }
+
+    #signature-pad {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: var(--radius);
+      width: 100%;
+      height: 150px;
+      touch-action: none;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); text-align: center;">
+    <h3 style="margin: 0;">Live Tracking</h3>
+  </header>
+
+  <div id="loading" style="padding: 2rem; text-align: center;">
+    <div class="spinner"></div>
+    <p style="margin-top: 1rem;">Finding shipment...</p>
+  </div>
+
+  <div id="error-screen" style="display: none; padding: 2rem; text-align: center;">
+    <div class="empty-icon text-red">⚠️</div>
+    <h3 id="error-msg">Shipment not found.</h3>
+  </div>
+
+  <main class="container" id="app" style="display: none; padding-bottom: 2rem;">
+    <div class="card" style="margin-bottom: 1rem;">
+      <div class="card-header" style="border-bottom: none; padding-bottom: 0;">
+        <h2 class="mono text-gold" style="margin: 0;" id="job-code-display"></h2>
+        <span class="badge" id="job-status"></span>
+      </div>
+      <p style="margin-top: 0.5rem; margin-bottom: 0;"><strong id="job-origin"></strong> <span class="text-text2">→</span> <strong id="job-destination"></strong></p>
+    </div>
+
+    <!-- Map container -->
+    <div id="map-container" style="display: none;">
+      <div id="gps-banner" class="banner banner-amber" style="display: none; margin-bottom: 0.5rem; font-size: 0.875rem; padding: 0.5rem;">
+        GPS signal lost – last seen <span id="gps-ago"></span> mins ago.
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+      <h3 style="margin-top: 0;">Status Timeline</h3>
+      <div class="timeline">
+        <div class="step" id="step-confirmed">
+          <div class="step-title">Confirmed</div>
+          <div class="step-desc">Order has been placed</div>
+        </div>
+        <div class="step" id="step-assigned">
+          <div class="step-title">Assigned</div>
+          <div class="step-desc" id="desc-assigned">Waiting for driver dispatch</div>
+        </div>
+        <div class="step" id="step-intransit">
+          <div class="step-title">In Transit</div>
+          <div class="step-desc">Driver is on the way</div>
+        </div>
+        <div class="step" id="step-delivered">
+          <div class="step-title">Delivered</div>
+          <div class="step-desc">Awaiting your signature</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ePOD Signing Section -->
+    <div id="epod-section" class="card" style="display: none; border-color: var(--teal);">
+      <h3 style="margin-top: 0; color: var(--teal);">Sign Delivery Note</h3>
+      <p style="font-size: 0.875rem;">Driver has marked this job as delivered. Please sign to confirm receipt and generate the invoice.</p>
+      
+      <div class="form-group">
+        <label class="form-label">Your Signature</label>
+        <canvas id="signature-pad"></canvas>
+        <button id="clear-sig" class="btn btn-secondary" style="margin-top: 0.5rem; min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem;">Clear Signature</button>
+      </div>
+      <button id="btn-sign" class="btn btn-primary btn-block" style="background-color: var(--teal);">Submit & Get Invoice</button>
+    </div>
+
+    <!-- Payment Section -->
+    <div id="payment-section" class="card" style="display: none; border-color: var(--green);">
+      <h3 style="margin-top: 0; color: var(--green);">Payment & Documents</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span>Amount Due:</span>
+        <strong style="font-size: 1.25rem;">AED <span id="pay-amt"></span></strong>
+      </div>
+      
+      <a id="btn-pay" class="btn btn-primary btn-block" style="background-color: var(--green); text-decoration: none; margin-bottom: 1rem;" target="_blank" href="#">💳 Pay Now</a>
+      
+      <a id="btn-dl-invoice" class="btn btn-outline btn-block" style="text-decoration: none; margin-bottom: 0.5rem;" target="_blank" href="#">📄 Download Invoice</a>
+      <a id="btn-dl-epod" class="btn btn-secondary btn-block" style="text-decoration: none;" target="_blank" href="#">📄 Download ePOD</a>
+    </div>
+
+  </main>
+
+  <script type="module" src="/js/track.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Book Shipment</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); text-align: center;">
+    <h3 style="margin: 0;">Request a Quote</h3>
+  </header>
+
+  <main class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="card">
+      <p style="margin-top: 0;">Fill out the details below to receive a professional quote from the transport provider.</p>
+
+      <form id="booking-form" style="margin-top: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Service Type</label>
+          <select id="field-service" class="form-input" required>
+            <option value="logistics">Logistics / Trucking</option>
+            <option value="crane">Crane Service</option>
+            <option value="equipment">Heavy Equipment Rental</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pickup Location</label>
+          <input type="text" id="field-origin" class="form-input" placeholder="e.g. Jebel Ali Port, Dubai" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Destination Location</label>
+          <input type="text" id="field-destination" class="form-input" placeholder="e.g. Al Quoz Ind 3, Dubai" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date Required</label>
+          <input type="date" id="field-date" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cargo / Equipment Details</label>
+          <input type="text" id="field-cargo" class="form-input" placeholder="e.g. 2x 40ft Containers / 50t Mobile Crane" required>
+        </div>
+
+        <hr style="border: 0; border-top: 1px dashed var(--border); margin: 1.5rem 0;">
+
+        <div class="form-group">
+          <label class="form-label">Your Company Name</label>
+          <input type="text" id="field-company" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" id="field-name" class="form-input" required>
+        </div>
+
+        <button type="submit" id="btn-submit" class="btn btn-primary btn-block" style="margin-top: 1rem; font-size: 1.125rem;">Submit Request</button>
+      </form>
+    </div>
+
+    <div id="success-screen" style="display: none; text-align: center; margin-top: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+      <h3 class="text-green">Request Sent</h3>
+      <p>Your enquiry has been submitted successfully. The provider will contact you shortly with a quote.</p>
+    </div>
+  </main>
+
+  <script type="module" src="/js/book.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

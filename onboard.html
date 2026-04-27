@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vendor Onboarding</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header style="padding: 1.5rem 1rem; text-align: center; background: var(--surf); border-bottom: 1px solid var(--border);">
+    <h2 style="margin: 0;"><span class="text-gold">⬡ KASPER</span></h2>
+    <span style="font-size: 0.75rem; color: var(--text2); letter-spacing: 2px;">VENDOR OS</span>
+  </header>
+
+  <main class="container" style="padding-top: 2rem; max-width: 500px;">
+    
+    <!-- Step 1: Phone Login -->
+    <div id="step-login" class="card" style="display: block;">
+      <h3 style="margin-top: 0;">Sign In / Register</h3>
+      <p>Enter your WhatsApp number to receive an OTP.</p>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="tel" id="field-phone" class="form-input" placeholder="050 123 4567" required>
+        </div>
+        <button type="submit" id="btn-send-otp" class="btn btn-primary btn-block">Send OTP</button>
+      </form>
+
+      <form id="otp-form" style="display: none; margin-top: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Enter OTP Code</label>
+          <input type="text" id="field-otp" class="form-input" placeholder="123456" required>
+        </div>
+        <button type="submit" id="btn-verify-otp" class="btn btn-primary btn-block">Verify</button>
+      </form>
+    </div>
+
+    <!-- Step 2: Company Details Setup -->
+    <div id="step-setup" class="card" style="display: none;">
+      <h3 style="margin-top: 0;">Company Profile</h3>
+      <p>Please complete your profile to start quoting.</p>
+      
+      <form id="setup-form">
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" id="field-company" class="form-input" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">TRN (Tax Registration Number)</label>
+          <input type="text" id="field-trn" class="form-input" placeholder="15 digits" minlength="15" maxlength="15" required>
+          <small class="text-gold" style="display:block; margin-top:0.25rem;">Required for VAT invoices</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bank Name</label>
+          <input type="text" id="field-bank" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">IBAN</label>
+          <input type="text" id="field-iban" class="form-input" placeholder="AE..." required>
+        </div>
+
+        <button type="submit" id="btn-save-profile" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">Save & Continue</button>
+      </form>
+    </div>
+
+  </main>
+
+  <script type="module">
+    import { sendOTP, verifyOTP, getCurrentUser } from '/js/auth.js';
+    import { supabase } from '/js/supabase.js';
+
+    let userPhone = '';
+
+    // Check if already logged in but profile missing
+    async function checkExistingSession() {
+      const user = await getCurrentUser();
+      if (user) {
+        // User logged in, check if profile exists
+        checkProfile(user.id);
+      }
+    }
+
+    async function checkProfile(userId) {
+      const { data, error } = await supabase.from('vendors').select('id').eq('id', userId).single();
+      
+      if (data) {
+        // Profile exists, go to app
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('return') || '/vendor.html';
+        window.location.href = returnUrl;
+      } else {
+        // Needs setup
+        document.getElementById('step-login').style.display = 'none';
+        document.getElementById('step-setup').style.display = 'block';
+      }
+    }
+
+    // Step 1: OTP Flow
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-send-otp');
+      btn.innerText = 'Sending...';
+      btn.disabled = true;
+
+      const phone = document.getElementById('field-phone').value;
+      userPhone = phone;
+
+      try {
+        const { error } = await sendOTP(phone);
+        if (error) throw error;
+        
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('otp-form').style.display = 'block';
+      } catch (err) {
+        console.error(err);
+        alert('Failed to send OTP. ' + err.message);
+      } finally {
+        btn.innerText = 'Send OTP';
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('otp-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-verify-otp');
+      btn.innerText = 'Verifying...';
+      btn.disabled = true;
+
+      const token = document.getElementById('field-otp').value;
+
+      try {
+        const { session, error } = await verifyOTP(userPhone, token);
+        if (error) throw error;
+        
+        if (session) {
+          checkProfile(session.user.id);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Invalid OTP. ' + err.message);
+        btn.innerText = 'Verify';
+        btn.disabled = false;
+      }
+    });
+
+    // Step 2: Save Profile
+    document.getElementById('setup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-profile');
+      btn.innerText = 'Saving...';
+      btn.disabled = true;
+
+      const trn = document.getElementById('field-trn').value;
+      if (!/^\d{15}$/.test(trn.replace(/\s/g, ''))) {
+        alert('TRN must be exactly 15 digits.');
+        btn.innerText = 'Save & Continue';
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        const user = await getCurrentUser();
+        
+        const payload = {
+          id: user.id, // Ensure vendor ID matches auth UID
+          company_name: document.getElementById('field-company').value,
+          trn: trn.replace(/\s/g, ''),
+          bank_name: document.getElementById('field-bank').value,
+          bank_iban: document.getElementById('field-iban').value,
+          phone: user.phone || userPhone,
+          plan: 'starter'
+        };
+
+        const { error } = await supabase.from('vendors').insert([payload]);
+        if (error) throw error;
+
+        // Redirect to portal
+        window.location.href = '/vendor.html';
+
+      } catch (err) {
+        console.error(err);
+        alert('Failed to save profile. ' + err.message);
+        btn.innerText = 'Save & Continue';
+        btn.disabled = false;
+      }
+    });
+
+    checkExistingSession();
+  </script>
+</body>
+</html>

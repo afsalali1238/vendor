@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Approve Quote</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); text-align: center;">
+    <h3 style="margin: 0;">Quote Approval</h3>
+  </header>
+
+  <div id="loading" style="padding: 2rem; text-align: center;">
+    <div class="spinner"></div>
+    <p style="margin-top: 1rem;">Loading quote...</p>
+  </div>
+
+  <div id="error-screen" style="display: none; padding: 2rem; text-align: center;">
+    <div class="empty-icon text-red">⚠️</div>
+    <h3 id="error-msg">Quote not found or invalid link.</h3>
+  </div>
+
+  <main class="container" id="app" style="display: none; padding-bottom: 2rem;">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="mono text-gold" style="margin: 0;" id="job-code-display"></h2>
+        <span class="badge badge-quoted" id="job-status">PENDING APPROVAL</span>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Route</p>
+        <p style="margin: 0; font-weight: bold;"><span class="text-teal">●</span> <span id="job-origin"></span></p>
+        <div style="border-left: 2px dashed var(--border); margin-left: 5px; padding-left: 15px; margin-top: 5px; margin-bottom: 5px;"></div>
+        <p style="margin: 0; font-weight: bold;"><span class="text-gold">●</span> <span id="job-destination"></span></p>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+        <div>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Date</p>
+          <p style="margin: 0; font-weight: bold;" id="job-date"></p>
+        </div>
+        <div>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Cargo</p>
+          <p style="margin: 0; font-weight: bold;" id="job-cargo"></p>
+        </div>
+      </div>
+
+      <div style="background: var(--surf2); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;">
+        <h3 style="margin-top: 0; margin-bottom: 0.5rem; color: var(--text2);">Quote Amount</h3>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+          <span>Amount (ex-VAT)</span>
+          <span id="price-ex-vat"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>VAT (5%)</span>
+          <span id="price-vat"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.125rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+          <span class="text-gold">TOTAL (inc-VAT)</span>
+          <span id="price-inc-vat"></span>
+        </div>
+      </div>
+
+      <a id="btn-view-pdf" class="btn btn-secondary btn-block" style="margin-bottom: 1rem; text-decoration: none;" target="_blank" href="#">📄 View Full Quote PDF</a>
+
+      <div id="action-buttons">
+        <button id="btn-approve" class="btn btn-primary btn-block" style="margin-bottom: 0.5rem; font-size: 1.125rem;">✓ Approve Quote</button>
+        <a id="btn-decline" class="btn btn-outline btn-block" style="text-decoration: none;" href="#">✗ Decline</a>
+      </div>
+    </div>
+
+    <div id="success-screen" style="display: none; text-align: center; margin-top: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+      <h3 class="text-green">Quote Approved!</h3>
+      <p>Thank you. Your job is now confirmed.</p>
+      <a id="btn-track" class="btn btn-primary btn-block" style="margin-top: 1rem; text-decoration: none;" href="#">Track Your Delivery</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { getJobByCode, clientApproveQuote } from '/js/supabase.js';
+    import { formatAED, buildTrackUrl } from '/js/whatsapp.js';
+
+    let jobData = null;
+
+    async function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobCode = urlParams.get('job');
+
+      if (!jobCode) {
+        showError('Invalid link.');
+        return;
+      }
+
+      document.getElementById('btn-decline').href = `/decline.html?job=${jobCode}`;
+
+      try {
+        jobData = await getJobByCode(jobCode);
+        if (!jobData) throw new Error('Not found');
+        renderJob();
+      } catch (err) {
+        console.error(err);
+        showError('Failed to load quote details. Try again.');
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-screen').style.display = 'block';
+      document.getElementById('error-msg').innerText = msg;
+    }
+
+    function renderJob() {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+
+      document.getElementById('job-code-display').innerText = jobData.job_code;
+      document.getElementById('job-origin').innerText = jobData.origin;
+      document.getElementById('job-destination').innerText = jobData.destination;
+      document.getElementById('job-date').innerText = jobData.pickup_date || '—';
+      document.getElementById('job-cargo').innerText = jobData.cargo_type || jobData.equipment_type || '—';
+
+      const price = parseFloat(jobData.quoted_price || 0);
+      const priceExVAT = price / 1.05;
+      const vatAmount = price - priceExVAT;
+
+      document.getElementById('price-ex-vat').innerText = `AED ${formatAED(priceExVAT)}`;
+      document.getElementById('price-vat').innerText = `AED ${formatAED(vatAmount)}`;
+      document.getElementById('price-inc-vat').innerText = `AED ${formatAED(price)}`;
+
+      if (jobData.quote_pdf_url) {
+        document.getElementById('btn-view-pdf').href = jobData.quote_pdf_url;
+      } else {
+        document.getElementById('btn-view-pdf').style.display = 'none';
+      }
+
+      if (jobData.status !== 'quoted' && jobData.status !== 'enquiry') {
+        document.getElementById('action-buttons').style.display = 'none';
+        document.getElementById('job-status').innerText = jobData.status.toUpperCase();
+        if (jobData.status === 'accepted' || jobData.status === 'assigned' || jobData.status === 'in_transit') {
+          showSuccess();
+        }
+      }
+    }
+
+    document.getElementById('btn-approve').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-approve');
+      btn.innerText = 'Approving...';
+      btn.disabled = true;
+
+      try {
+        await clientApproveQuote(jobData.job_code);
+        document.getElementById('action-buttons').style.display = 'none';
+        showSuccess();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to approve quote. Please try again.');
+        btn.innerText = '✓ Approve Quote';
+        btn.disabled = false;
+      }
+    });
+
+    function showSuccess() {
+      document.getElementById('success-screen').style.display = 'block';
+      document.getElementById('btn-track').href = buildTrackUrl(jobData.job_code);
+    }
+
+    init();
+  </script>
+</body>
+</html>

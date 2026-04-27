@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kasper Vendor OS</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#F59E0B">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header style="padding: 1.5rem 1rem; display: flex; justify-content: space-between; align-items: center; background: var(--bg);">
+    <div>
+      <h2 style="margin: 0; font-size: 1.25rem;">
+        <span class="text-gold">⬡ KASPER</span>
+      </h2>
+      <span style="font-size: 0.75rem; color: var(--text2); letter-spacing: 2px;">VENDOR OS</span>
+    </div>
+    <div>
+      <a href="/vendor.html" class="btn btn-outline" style="min-height: 36px; padding: 0.5rem 1rem; text-decoration: none; font-size: 0.875rem;">Login</a>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 4rem; padding-bottom: 4rem; text-align: center;">
+    <h1 style="font-size: 2.5rem; line-height: 1.2; margin-bottom: 1.5rem;">
+      Run your transport fleet from your <span class="text-gold">phone.</span>
+    </h1>
+    <p style="font-size: 1.125rem; max-width: 600px; margin: 0 auto 2rem; color: var(--text2);">
+      The all-in-one SaaS portal for UAE logistics and equipment rental SMEs. Send quotes in 60 seconds, track drivers live, and collect digital proof of delivery.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 300px; margin: 0 auto 4rem;">
+      <a href="/vendor.html" class="btn btn-primary" style="font-size: 1.125rem; padding: 1rem;">Launch Demo Portal</a>
+      <a href="https://wa.me/971500000000" class="btn btn-secondary" style="font-size: 1rem;">Contact Sales on WhatsApp</a>
+    </div>
+
+    <!-- Features -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; text-align: left;">
+      <div class="card" style="border-top: 3px solid var(--gold);">
+        <h3 style="margin-top: 0; color: var(--gold);">⚡ Lightning Quotes</h3>
+        <p style="margin-bottom: 0;">Type a price, tap Send. Professional VAT-compliant PDF sent to your client via WhatsApp in 10 seconds.</p>
+      </div>
+      
+      <div class="card" style="border-top: 3px solid var(--teal);">
+        <h3 style="margin-top: 0; color: var(--teal);">📍 Live Tracking</h3>
+        <p style="margin-bottom: 0;">Clients get a live GPS tracking link. No more "Where is my truck?" phone calls.</p>
+      </div>
+
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <h3 style="margin-top: 0; color: var(--green);">✍️ Digital ePOD</h3>
+        <p style="margin-bottom: 0;">Driver takes a photo, client signs on their phone. ePOD generated instantly. Invoice auto-sent.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer style="padding: 2rem 1rem; text-align: center; border-top: 1px solid var(--border); background: var(--surf);">
+    <p style="margin: 0; font-size: 0.875rem;">&copy; 2026 Kasper Technologies FZ-LLC. All rights reserved.</p>
+  </footer>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

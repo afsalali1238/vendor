@@ -1,0 +1,41 @@
+{
+  "rewrites": [
+    { "source": "/vendor",   "destination": "/vendor.html" },
+    { "source": "/driver",   "destination": "/driver.html" },
+    { "source": "/track",    "destination": "/track.html" },
+    { "source": "/approve",  "destination": "/approve.html" },
+    { "source": "/decline",  "destination": "/decline.html" },
+    { "source": "/book",     "destination": "/book.html" },
+    { "source": "/onboard",  "destination": "/onboard.html" },
+    { "source": "/ops",      "destination": "/ops.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "geolocation=(self), camera=(self)" }
+      ]
+    },
+    {
+      "source": "/js/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/css/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/public/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ]
+}

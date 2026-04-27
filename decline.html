@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Decline Quote</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); text-align: center;">
+    <h3 style="margin: 0;">Quote Declined</h3>
+  </header>
+
+  <main class="container" style="padding-top: 2rem; text-align: center;">
+    <div id="loading">
+      <div class="spinner"></div>
+      <p style="margin-top: 1rem;">Updating status...</p>
+    </div>
+
+    <div id="content" style="display: none;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">ℹ️</div>
+      <h2 style="margin-bottom: 1rem;">Quote Declined</h2>
+      <p>You have declined the quote for job <strong id="job-code" class="mono text-gold"></strong>.</p>
+      
+      <div class="card" style="margin-top: 2rem; text-align: left;">
+        <h4 style="margin-top: 0;">Want to negotiate or adjust the details?</h4>
+        <p style="font-size: 0.875rem;">Contact the transport provider directly via WhatsApp to discuss your requirements.</p>
+        <button id="btn-contact" class="btn btn-outline btn-block" style="margin-top: 1rem;">Contact Provider</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { clientDeclineQuote } from '/js/supabase.js';
+
+    async function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobCode = urlParams.get('job');
+
+      if (!jobCode) {
+        document.getElementById('loading').innerHTML = '<p class="text-red">Invalid link.</p>';
+        return;
+      }
+
+      document.getElementById('job-code').innerText = jobCode;
+
+      try {
+        await clientDeclineQuote(jobCode);
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        // For MVP, button just goes back or closes since we don't have vendor whatsapp number easily available 
+        // without another query. Actually, we can just say "Please reply in the WhatsApp chat".
+        document.getElementById('btn-contact').addEventListener('click', () => {
+          alert('Please reply directly in your existing WhatsApp chat with the provider.');
+        });
+      } catch (err) {
+        console.error(err);
+        document.getElementById('loading').innerHTML = '<p class="text-red">Failed to decline quote. Please try again.</p>';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
