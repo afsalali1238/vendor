@@ -1,20 +1,21 @@
 // ================================================================
 // js/auth.js
-// Vendor authentication helpers (Pure sessionStorage Demo Mode)
+// Vendor authentication helpers (localStorage Demo Mode)
+// Uses localStorage so credentials persist across tabs/windows
 // ================================================================
 
 export function getCurrentVendorId() {
-  return sessionStorage.getItem('vendor_id');
+  return localStorage.getItem('vendor_id');
 }
 
 export function getCurrentVendorName() {
-  return sessionStorage.getItem('vendor_name');
+  return localStorage.getItem('vendor_name');
 }
 
 export function requireVendorAuth() {
   const vendorId = getCurrentVendorId();
   if (!vendorId) {
-    window.location.href = '/index.html';
+    // No session — show login modal on vendor.html, or redirect to demo
     return null;
   }
   return {
@@ -44,9 +45,9 @@ export async function getVendorId() {
 }
 
 export function logout() {
-  sessionStorage.removeItem('vendor_id');
-  sessionStorage.removeItem('vendor_name');
-  window.location.href = '/index.html';
+  localStorage.removeItem('vendor_id');
+  localStorage.removeItem('vendor_name');
+  window.location.href = '/demo.html';
 }
 
 // ── UTILITIES ────────────────────────────────────────────────────
@@ -59,4 +60,9 @@ export function formatUAEPhone(input) {
 
 export function validateTRN(trn) {
   return /^\d{15}$/.test(trn.replace(/\s/g, ''));
+}
+
+export function generateDriverToken(jobId, driverId, vendorId) {
+  // Demo mode: return a simple token
+  return `demo-${jobId}-${driverId}`;
 }

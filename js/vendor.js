@@ -13,12 +13,16 @@ let currentTab = 'tab-rfqs';
 // Initialize
 async function init() {
   try {
-    const user = await requireVendorAuth();
+    const user = requireVendorAuth();
     if (!user) {
+      // Show login modal — don't redirect
       document.getElementById('loginModal').classList.add('active');
       document.getElementById('btnLogin').addEventListener('click', () => {
-        const selected = document.getElementById('vendor-select').value;
-        localStorage.setItem('kasper_active_vendor', selected);
+        const select = document.getElementById('vendor-select');
+        const id = select.value;
+        const name = select.options[select.selectedIndex].textContent;
+        localStorage.setItem('vendor_id', id);
+        localStorage.setItem('vendor_name', name);
         window.location.reload();
       });
       return;
@@ -96,10 +100,10 @@ function setupHeader() {
 function setupLogout() {
   const btn = document.getElementById('logoutBtn');
   if (btn) {
-    btn.addEventListener('click', async () => {
-      localStorage.removeItem('kasper_active_vendor');
-      await logout();
-      window.location.href = '/index.html';
+    btn.addEventListener('click', () => {
+      localStorage.removeItem('vendor_id');
+      localStorage.removeItem('vendor_name');
+      window.location.href = '/demo.html';
     });
   }
 }

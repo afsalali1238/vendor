@@ -3,132 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kasper MVP - Quick Links</title>
+  <title>Kasper Vendor OS — Demo</title>
   <link rel="icon" type="image/png" href="/icon.png">
   <link rel="stylesheet" href="/css/app.css">
   <style>
-    .link-group {
-      margin-bottom: 2rem;
-    }
-    .link-group h3 {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-      color: var(--gold);
-    }
-    .link-card {
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
+    .demo-card {
       background: var(--surf2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      margin-bottom: 0.5rem;
-      text-decoration: none;
-      transition: border-color 0.2s, transform 0.2s;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
     }
-    .link-card:hover {
-      border-color: var(--teal);
-      transform: translateY(-2px);
-    }
-    .link-title {
-      font-weight: 700;
-      color: var(--text);
+    .demo-card h3 {
+      margin: 0 0 0.25rem 0;
       font-size: 1.125rem;
-      margin-bottom: 0.25rem;
     }
-    .link-desc {
+    .demo-card p {
+      margin: 0 0 1rem 0;
       font-size: 0.875rem;
       color: var(--text2);
-    }
-    .badge-role {
-      font-size: 0.7rem;
-      padding: 0.15rem 0.4rem;
-      border-radius: 4px;
-      margin-left: 0.5rem;
-      background: var(--border);
-      color: var(--text);
-      vertical-align: middle;
     }
   </style>
 </head>
 <body>
 
-  <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); text-align: center;">
-    <img src="/icon.png" alt="Kasper Logo" style="height: 40px; margin-bottom: 0.5rem;">
-    <h2 style="margin: 0; color: var(--gold);">MVP Directory</h2>
-    <p style="margin: 0.5rem 0 0 0; color: var(--text2); font-size: 0.875rem;">Access all portals and test flows from here.</p>
+  <header style="padding: 2rem 1rem; text-align: center; border-bottom: 1px solid var(--border); background: var(--surf);">
+    <img src="/icon.png" alt="Kasper Logo" style="height: 48px; margin-bottom: 0.75rem;">
+    <h2 style="margin: 0; color: var(--gold);">Kasper Vendor OS</h2>
+    <p style="margin: 0.5rem 0 0 0; color: var(--text2); font-size: 0.875rem;">Demo Hub — Select a portal to get started.</p>
   </header>
 
-  <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
-    
-    <div class="link-group">
-      <h3>Core Portals</h3>
-      
-      <div class="link-card" style="border-left: 4px solid var(--teal); display: block; cursor: default;">
-        <div><span class="link-title">Vendor Dashboard</span> <span class="badge-role">VENDOR</span></div>
-        <div class="link-desc" style="margin-bottom: 1rem;">Manage RFQs, Active Jobs, Drivers, and Payments.</div>
-        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-          <button class="btn btn-outline" style="text-align: left; padding: 0.75rem;" onclick="loginVendor('11111111-1111-1111-1111-111111111111', 'Al Noor Transport LLC')">
-            <strong style="color: var(--gold);">Login: Al Noor Transport LLC</strong>
-          </button>
-          <button class="btn btn-outline" style="text-align: left; padding: 0.75rem;" onclick="loginVendor('22222222-2222-2222-2222-222222222222', 'Gulf Freight Co.')">
-            <strong style="color: var(--teal);">Login: Gulf Freight Co.</strong>
-          </button>
-        </div>
+  <main class="container" style="max-width: 480px; padding-top: 2rem; padding-bottom: 4rem;">
+
+    <!-- Vendor Dashboard -->
+    <div class="demo-card" style="border-left: 4px solid var(--teal);">
+      <h3>🏢 Vendor Dashboard <span style="font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: var(--border); color: var(--text); vertical-align: middle; margin-left: 0.25rem;">VENDOR</span></h3>
+      <p>Manage RFQs, Active Jobs, Drivers & Payments.</p>
+      <div class="form-group" style="margin-bottom: 0.75rem;">
+        <select id="vendor-select" class="form-input" style="padding: 0.75rem;">
+          <option value="11111111-1111-1111-1111-111111111111" data-name="Al Noor Transport LLC">Al Noor Transport LLC</option>
+          <option value="22222222-2222-2222-2222-222222222222" data-name="Gulf Freight Co.">Gulf Freight Co.</option>
+        </select>
       </div>
-
-      <a href="/ops.html" class="link-card" target="_blank" style="border-left: 4px solid #ff4444;">
-        <div><span class="link-title">Internal Admin (KASLO)</span> <span class="badge-role">ADMIN</span></div>
-        <div class="link-desc">Kasper Technologies control tower for internal staff.</div>
-      </a>
-
-      <a href="/driver-login.html" class="link-card" target="_blank" style="border-left: 4px solid #fff;">
-        <div><span class="link-title">Driver Portal</span> <span class="badge-role">DRIVER</span></div>
-        <div class="link-desc">Enter phone number to see assigned jobs. Just like the Kaslo flow.</div>
-      </a>
+      <button id="btn-vendor-go" class="btn btn-primary btn-block" style="font-size: 1rem;">Enter Vendor Portal →</button>
     </div>
 
-    <div class="link-group">
-      <h3>Client Booking Links <span style="font-size: 0.75rem; color: var(--text2); font-weight: 400;">(vendor-specific)</span></h3>
-      
-      <a href="/book.html?vendor=11111111-1111-1111-1111-111111111111" class="link-card" target="_blank" style="border-left: 4px solid var(--gold);">
-        <div><span class="link-title">Book → Al Noor Transport LLC</span> <span class="badge-role">CLIENT</span></div>
-        <div class="link-desc">Client booking form routed to Vendor 1. Enquiries appear in their RFQ tab.</div>
-      </a>
-
-      <a href="/book.html?vendor=22222222-2222-2222-2222-222222222222" class="link-card" target="_blank" style="border-left: 4px solid var(--gold);">
-        <div><span class="link-title">Book → Gulf Freight Co.</span> <span class="badge-role">CLIENT</span></div>
-        <div class="link-desc">Client booking form routed to Vendor 2. Enquiries appear in their RFQ tab.</div>
-      </a>
-    </div>
-
-    <div class="link-group">
-      <h3>Quick Test Links <span style="font-size: 0.75rem; color: var(--text2); font-weight: 400;">(direct access)</span></h3>
-      <a href="/driver.html?job=KSP-7702&t=demo-token" class="link-card" target="_blank" style="border-left: 4px solid var(--green);">
-        <div><span class="link-title">Driver View: Job KSP-7702</span> <span class="badge-role">DRIVER</span></div>
-        <div class="link-desc">Simulate driver ePOD flow for an in-transit job.</div>
-      </a>
-      <a href="/track.html?job=KSP-7702" class="link-card" target="_blank" style="border-left: 4px solid var(--amber);">
-        <div><span class="link-title">Tracking: Job KSP-7702</span> <span class="badge-role">CLIENT</span></div>
-        <div class="link-desc">Simulate client tracking view with live GPS simulation.</div>
-      </a>
+    <!-- Driver Portal -->
+    <div class="demo-card" style="border-left: 4px solid var(--green);">
+      <h3>🚛 Driver Portal <span style="font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: var(--border); color: var(--text); vertical-align: middle; margin-left: 0.25rem;">DRIVER</span></h3>
+      <p>Login as a driver to see assigned jobs and submit ePOD.</p>
+      <a href="/driver-login.html" class="btn btn-outline btn-block" style="text-decoration: none; text-align: center; border-color: var(--green); color: var(--green); font-size: 1rem;">Open Driver Login →</a>
     </div>
 
   </main>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
-      });
-    }
-
-    function loginVendor(id, name) {
-      sessionStorage.setItem('vendor_id', id);
-      sessionStorage.setItem('vendor_name', name);
-      window.open('/vendor.html', '_blank');
-    }
+    // Vendor login — saves to localStorage so it persists across tabs
+    document.getElementById('btn-vendor-go').addEventListener('click', () => {
+      const select = document.getElementById('vendor-select');
+      const id = select.value;
+      const name = select.options[select.selectedIndex].dataset.name;
+      localStorage.setItem('vendor_id', id);
+      localStorage.setItem('vendor_name', name);
+      window.location.href = '/vendor.html';
+    });
   </script>
 </body>
 </html>
