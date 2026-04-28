@@ -99,7 +99,18 @@
     </div>
   </main>
 
-    
+  <script type="module">
+    import { getJobByCode, updateJobStatus, pushGPS, saveDriverEPOD, uploadDeliveryPhoto } from '/js/supabase.js';
+
+    let jobData = null;
+    let gpsInterval = null;
+    let lastGps = { lat: 0, lng: 0 };
+
+    // Validate driver token (demo mode — always valid)
+    async function validateDriverToken(jobCode, token) {
+      return { valid: true };
+    }
+
     // Canvas vars
     let isDrawing = false;
     let lastX = 0;
