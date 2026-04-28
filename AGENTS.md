@@ -94,6 +94,7 @@ Timestamps: ALWAYS TIMESTAMPTZ. ALWAYS UTC. NEVER store local time.
 Realtime: use Supabase channel subscriptions. NEVER poll with setInterval for live data.
 Storage paths: vendors/{vendor_id}/jobs/{job_code}/{doc_type}.pdf
 job_code format: KSP-{4 digit zero-padded number} e.g. KSP-0042
+RLS: **Disabled for demo.** Re-enable with proper `vendor_id = auth.uid()` policies before production launch.
 
 ## PDF conventions
 
@@ -152,3 +153,9 @@ job_code format: KSP-{4 digit zero-padded number} e.g. KSP-0042
 - Create one file at a time. Verify it works before moving to the next.
 - If a Supabase migration is needed, write the SQL and apply it before writing the frontend code that depends on it.
 - When in doubt about a design pattern, check how vendor.html implements it and match exactly.
+
+## Demo mode notes
+
+- **RLS is disabled for demo.** All Supabase queries currently bypass Row Level Security because demo auth uses localStorage, not real Supabase sessions. Re-enable with proper `vendor_id = auth.uid()` policies before production launch.
+- `isDemo()` in `js/supabase.js` returns `true` — all data operations use `localStorage` mock data, not live Supabase tables.
+- Demo vendor IDs: `11111111-1111-1111-1111-111111111111` (Al Noor Transport LLC), `22222222-2222-2222-2222-222222222222` (Gulf Freight Co.).

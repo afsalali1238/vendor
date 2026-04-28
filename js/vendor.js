@@ -1,39 +1,34 @@
 import { 
   getVendorProfile, updateVendorProfile, getVendorRFQs, submitRFQQuote, 
   getActiveJobs, getPaymentJobs, getVendorDrivers, 
-  assignDriver, addDriver 
+  assignDriver, addDriver, clientApproveQuote 
 } from '/js/supabase.js';
-import { requireVendorAuth, logout, generateDriverToken } from '/js/auth.js';
+import { requireAuth, getCurrentVendorId, getCurrentVendorName, generateDriverToken } from '/js/auth.js';
 import { generateQuotePDF } from '/js/pdf.js';
 import { openQuoteMessage, openDriverAssignMessage, openPaymentReminder, formatAED, buildDriverUrl } from '/js/whatsapp.js';
+
+// Module-level vendor identity — set once at boot, used everywhere
+const VENDOR_ID = getCurrentVendorId();
+const VENDOR_NAME = getCurrentVendorName();
 
 let currentVendor = null;
 let currentTab = 'tab-rfqs';
 
 // Initialize
 async function init() {
-  try {
-    const user = requireVendorAuth();
-    if (!user) {
-      // Show login modal — don't redirect
-      document.getElementById('loginModal').classList.add('active');
-      document.getElementById('btnLogin').addEventListener('click', () => {
-        const select = document.getElementById('vendor-select');
-        const id = select.value;
-        const name = select.options[select.selectedIndex].textContent;
-        localStorage.setItem('vendor_id', id);
-        localStorage.setItem('vendor_name', name);
-        window.location.reload();
-      });
-      return;
-    }
+  // ── Auth gate (AGENTS.md: requireAuth before anything) ──
+  const user = requireAuth();
+  if (!user) {
+    // No session — redirect to demo login
+    window.location.href = '/demo.html';
+    return;
+  }
 
+  try {
     currentVendor = await getVendorProfile();
 
-    // Show company name in header
-    if (currentVendor.company_name) {
-      document.getElementById('header-company').innerText = currentVendor.company_name;
-    }
+    // Show vendor name in header
+    document.querySelector('header h3').textContent = VENDOR_NAME + ' · Vendor OS';
 
     setupTabs();
     setupModals();
@@ -59,7 +54,6 @@ async function init() {
 
   } catch (err) {
     console.error('Init error:', err);
-    alert('Failed to load portal. Please try again.');
   }
 }
 
@@ -91,9 +85,16 @@ function setupTabs() {
 }
 
 function setupHeader() {
-  const link = document.getElementById('btn-copy-link');
-  if (link && currentVendor) {
-    link.href = `${window.location.origin}/book.html?vendor=${currentVendor.id}`;
+  const btn = document.getElementById('btn-copy-link');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const bookingUrl = window.location.origin + '/book.html?vendor=' + VENDOR_ID;
+      navigator.clipboard.writeText(bookingUrl);
+      const original = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    });
   }
 }
 
@@ -215,6 +216,7 @@ async function refreshData() {
 
 async function refreshRFQs() {
   try {
+    // AGENTS.md §Security #3: all queries scoped to VENDOR_ID via supabase.js helpers
     const rfqs = await getVendorRFQs();
     const container = document.getElementById('rfq-list');
     document.getElementById('rfq-count').innerText = rfqs.length;
@@ -333,6 +335,41 @@ async function refreshRFQs() {
         el.appendChild(form);
       }
 
+      // Quoted RFQs: show Approve + Decline buttons
+      if (rfq.status === 'quoted') {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; gap:0.5rem; margin-top:1rem;';
+
+        const btnApprove = document.createElement('button');
+        btnApprove.className = 'btn btn-primary';
+        btnApprove.style.flex = '1';
+        btnApprove.innerText = '✓ Approve Quote';
+        btnApprove.onclick = async () => {
+          btnApprove.innerText = 'Approving...';
+          btnApprove.disabled = true;
+          try {
+            await clientApproveQuote(job.job_code);
+            refreshRFQs();
+            refreshActiveJobs();
+          } catch (err) {
+            console.error(err);
+            btnApprove.innerText = '✓ Approve Quote';
+            btnApprove.disabled = false;
+          }
+        };
+        row.appendChild(btnApprove);
+
+        // Show price summary
+        if (rfq.vendor_price) {
+          const priceTag = document.createElement('div');
+          priceTag.style.cssText = 'flex:1; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--gold); font-size:1rem;';
+          priceTag.innerText = `AED ${formatAED(rfq.vendor_price)}`;
+          row.appendChild(priceTag);
+        }
+
+        el.appendChild(row);
+      }
+
       container.appendChild(el);
     });
   } catch (err) {
@@ -344,6 +381,7 @@ async function refreshRFQs() {
 
 async function refreshActiveJobs() {
   try {
+    // AGENTS.md §Security #3: all queries scoped to VENDOR_ID via supabase.js helpers
     const jobs = await getActiveJobs();
     const container = document.getElementById('job-list');
     document.getElementById('job-count').innerText = jobs.length;
@@ -368,6 +406,8 @@ async function refreshActiveJobs() {
       if (job.status === 'in_transit') badgeClass = 'badge-intransit';
       if (job.status === 'delivered' || job.status === 'epod_pending') badgeClass = 'badge-delivered';
 
+      const trackUrl = `${window.location.origin}/track.html?job=${job.job_code}`;
+
       el.innerHTML = `
         <div class="card-header">
           <span class="mono text-gold">${job.job_code}</span>
@@ -375,7 +415,18 @@ async function refreshActiveJobs() {
         </div>
         <p><strong>Route:</strong> ${job.origin} → ${job.destination}</p>
         <p><strong>Date:</strong> ${job.pickup_date}</p>
+        <div style="margin-top:0.5rem; display:flex; gap:0.5rem; align-items:center;">
+          <a href="${trackUrl}" target="_blank" style="color:var(--teal); font-size:0.8rem; text-decoration:none;">📍 Tracking Link</a>
+          <button class="copy-track-btn" style="background:none; border:1px solid var(--border); color:var(--text2); font-size:0.7rem; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer;">Copy</button>
+        </div>
       `;
+
+      // Wire up Copy button for tracking link
+      el.querySelector('.copy-track-btn').addEventListener('click', (e) => {
+        navigator.clipboard.writeText(trackUrl);
+        e.target.textContent = '✓';
+        setTimeout(() => { e.target.textContent = 'Copy'; }, 1500);
+      });
 
       if (job.status === 'vendor_po_sent' || job.status === 'accepted' || (!job.driver_id && job.status !== 'delivered')) {
         const row = document.createElement('div');
@@ -484,6 +535,7 @@ async function showAssignDriverModal(job) {
 
 async function refreshFleet() {
   try {
+    // AGENTS.md §Security #3: all queries scoped to VENDOR_ID via supabase.js helpers
     const drivers = await getVendorDrivers();
     const container = document.getElementById('fleet-list');
 
@@ -532,6 +584,7 @@ async function refreshFleet() {
 
 async function refreshPayments() {
   try {
+    // AGENTS.md §Security #3: all queries scoped to VENDOR_ID via supabase.js helpers
     const jobs = await getPaymentJobs();
     const container = document.getElementById('payment-list');
     

@@ -8,10 +8,10 @@
 import { createJobEnquiry, getVendorProfileById } from '/js/supabase.js';
 
 // ── INIT: Resolve vendor from URL ────────────────────────────────
-const urlParams = new URLSearchParams(window.location.search);
-const vendorId = urlParams.get('vendor') || urlParams.get('v');
+const params = new URLSearchParams(window.location.search);
+const VENDOR_ID = params.get('vendor') || params.get('v');
 
-if (!vendorId) {
+if (!VENDOR_ID) {
   // No vendor param — hide form, show error
   document.getElementById('form-card').style.display = 'none';
   document.getElementById('error-screen').style.display = 'block';
@@ -19,7 +19,7 @@ if (!vendorId) {
   // Show vendor name in header
   (async () => {
     try {
-      const profile = await getVendorProfileById(vendorId);
+      const profile = await getVendorProfileById(VENDOR_ID);
       if (profile && profile.company_name) {
         const el = document.getElementById('header-vendor');
         el.innerText = `Provider: ${profile.company_name}`;
@@ -33,8 +33,8 @@ if (!vendorId) {
 document.getElementById('booking-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // Guard: should never fire without vendorId (form is hidden), but safety check
-  if (!vendorId) return;
+  // Guard: should never fire without VENDOR_ID (form is hidden), but safety check
+  if (!VENDOR_ID) return;
 
   const btn = document.getElementById('btn-submit');
   const originalText = btn.innerText;
@@ -45,7 +45,7 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
   const clientEmail = document.getElementById('field-email').value;
 
   const payload = {
-    vendor_id: vendorId,
+    vendor_id: VENDOR_ID,
     status: 'enquiry',
     source: 'book_form',
     service_type: document.getElementById('field-service').value,

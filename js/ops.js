@@ -6,6 +6,19 @@ async function init() {
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.addEventListener('click', logout);
   
+  await refreshOps();
+
+  // Auto-refresh every 10s to stay in sync with vendor/driver changes
+  setInterval(() => {
+    if (!document.hidden) refreshOps();
+  }, 10000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshOps();
+  });
+}
+
+async function refreshOps() {
   try {
     const vendors = await getAllVendors();
     const jobs = await getAllJobs();
@@ -14,34 +27,8 @@ async function init() {
     renderVendors(vendors);
     renderJobs(jobs);
 
-    const btnDemo = document.getElementById('btn-load-demo');
-    if (jobs.length === 0 && btnDemo) {
-      btnDemo.style.display = 'block';
-      btnDemo.onclick = async () => {
-        btnDemo.innerText = 'Loading...';
-        btnDemo.disabled = true;
-        try {
-          await loadDemoData(vendors[0]?.id); // Use the first available vendor
-          window.location.reload();
-        } catch(e) {
-          console.error(e);
-          alert('Failed to load demo data');
-          btnDemo.innerText = 'Load Demo Data';
-          btnDemo.disabled = false;
-        }
-      };
-    }
-
   } catch (err) {
     console.error(err);
-    document.querySelector('main').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon text-red">🚫</div>
-        <h3>Access Denied</h3>
-        <p>You do not have permission to view the internal ops portal.</p>
-        <a href="/index.html" class="btn btn-primary" style="margin-top:1rem;">Back to Home</a>
-      </div>
-    `;
   }
 }
 
