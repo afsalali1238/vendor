@@ -550,8 +550,23 @@ export async function getAllJobs() {
   if (isDemo()) {
     const data = getMockData();
     let allJobs = [];
-    Object.values(data.vendors).forEach(v => allJobs = allJobs.concat(v.jobs));
-    return allJobs;
+    Object.values(data.vendors).forEach(v => {
+      allJobs = allJobs.concat(v.jobs);
+      // Map RFQs to look like jobs so they appear in Ops dashboard
+      if (v.rfqs) {
+        v.rfqs.forEach(rfq => {
+          allJobs.push({
+            ...rfq.jobs,
+            id: rfq.id,
+            status: rfq.status,
+            vendor_id: v.profile.id,
+            quoted_price: rfq.vendor_price || rfq.jobs.quoted_price
+          });
+        });
+      }
+    });
+    // Sort all jobs by created/pickup descending for a realistic ops view
+    return allJobs.sort((a, b) => new Date(b.pickup_date || 0) - new Date(a.pickup_date || 0));
   }
   const result = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
   return handle(result);
