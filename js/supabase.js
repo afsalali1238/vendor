@@ -144,9 +144,9 @@ function isDemo() {
   return true;
 }
 
-// Get the active vendor ID from session storage
+// Get the active vendor ID from localStorage (set by demo.html / auth.js)
 function getActiveVendorId() {
-  return localStorage.getItem('kasper_active_vendor');
+  return localStorage.getItem('vendor_id');
 }
 
 // Get the vendor's specific data payload

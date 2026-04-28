@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kasper-v10';
+const CACHE_NAME = 'kasper-v11';
 const ASSETS = [
   '/',
   '/index.html',
