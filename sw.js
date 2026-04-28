@@ -1,9 +1,12 @@
-const CACHE_NAME = 'kasper-v1';
+const CACHE_NAME = 'kasper-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/vendor.html',
+  '/demo.html',
   '/driver.html',
+  '/book.html',
+  '/ops.html',
   '/css/app.css',
   '/js/vendor.js',
   '/js/supabase.js',
@@ -17,11 +20,28 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS);
     })
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
+      // Return cached version if found, otherwise fetch from network
       return response || fetch(event.request);
     })
   );
