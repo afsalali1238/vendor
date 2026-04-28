@@ -3,116 +3,183 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Driver Login - Kasper</title>
+  <title>Kasper Driver Portal</title>
   <link rel="icon" type="image/png" href="/icon.png">
   <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
 
-  <header style="padding: 2rem 1rem; text-align: center;">
-    <img src="/icon.png" alt="Logo" style="height: 50px; margin-bottom: 1rem;">
-    <h2>Driver Login</h2>
-    <p style="color: var(--text2);">Enter your phone number to see your jobs.</p>
+  <header style="padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid var(--border); background: var(--surf);">
+    <h2 style="margin: 0;"><span class="text-green">⬡</span> KASPER DRIVER</h2>
   </header>
 
-  <main class="container" style="max-width: 400px;">
-    <div class="card">
-      <div class="form-group">
-        <label class="form-label">Phone Number (+971...)</label>
-        <input type="tel" id="driver-phone" class="form-input" placeholder="+971500000000" required>
+  <main class="container" style="max-width: 420px; padding-top: 2rem;">
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+      <div class="card">
+        <h3 style="margin-top: 0; margin-bottom: 0.5rem;">Driver Login</h3>
+        <p style="color: var(--text2); font-size: 0.875rem; margin-bottom: 1.5rem;">Select your name from the fleet roster or enter a job code.</p>
+        
+        <div class="form-group">
+          <label class="form-label">Select Driver</label>
+          <select id="driver-select" class="form-input" style="padding: 0.75rem;">
+            <option value="" disabled selected>Loading drivers...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIN (default: 1234)</label>
+          <input type="password" id="driver-pin" class="form-input" placeholder="****" maxlength="4" style="letter-spacing: 4px; text-align: center; font-size: 1.25rem;">
+        </div>
+        <button id="btn-login" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">Log In</button>
       </div>
-      <button id="btn-login" class="btn btn-primary btn-block">Find My Jobs</button>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <p style="color: var(--text2); font-size: 0.75rem;">Or enter a direct job code:</p>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+          <input type="text" id="job-code-input" class="form-input" placeholder="e.g. KSP-7701" style="flex: 1;">
+          <button id="btn-search" class="btn btn-outline" style="width: auto; padding: 0.5rem 1rem;">Go</button>
+        </div>
+      </div>
     </div>
 
-    <div id="results" style="margin-top: 2rem; display: none;">
-      <h3 style="margin-bottom: 1rem;">Your Active Jobs</h3>
+    <!-- Dashboard Screen -->
+    <div id="dashboard-screen" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="margin: 0;" id="driver-greeting">My Jobs</h3>
+        <button id="btn-logout" class="btn btn-outline" style="width: auto; padding: 0.25rem 0.75rem; font-size: 0.875rem;">Log Out</button>
+      </div>
       <div id="job-list"></div>
     </div>
 
-    <div id="no-jobs" style="margin-top: 2rem; display: none; text-align: center;">
-      <div class="empty-icon">🚛</div>
-      <p>No active jobs found for this number.</p>
-    </div>
   </main>
 
   <script type="module">
-    import { supabase } from '/js/supabase.js';
-
-    // Demo Mode Logic
+    // Driver Login Portal — reads from the same localStorage mock data as vendor.js
+    
     function getMockData() {
       const stored = localStorage.getItem('kasper_mock_data');
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      try { return JSON.parse(stored); } catch(e) { return null; }
     }
 
-    document.getElementById('btn-login').addEventListener('click', () => {
-      const phone = document.getElementById('driver-phone').value.trim();
-      if (!phone) return alert('Please enter your phone number');
-
-      const btn = document.getElementById('btn-login');
-      btn.innerText = 'Searching...';
-      btn.disabled = true;
-
-      // In Demo Mode, search mock data
+    function getAllDrivers() {
       const data = getMockData();
-      const resultsDiv = document.getElementById('results');
-      const noJobsDiv = document.getElementById('no-jobs');
-      const jobList = document.getElementById('job-list');
-
-      resultsDiv.style.display = 'none';
-      noJobsDiv.style.display = 'none';
-      jobList.innerHTML = '';
-
-      let foundJobs = [];
-
-      if (data && data.vendors) {
-        Object.keys(data.vendors).forEach(vId => {
-          const vendor = data.vendors[vId];
-          const driver = vendor.drivers.find(d => d.phone === phone);
-          if (driver) {
-            // Find jobs assigned to this driver ID in this vendor
-            const jobs = vendor.jobs.filter(j => j.driver_id === driver.id && j.status !== 'paid');
-            jobs.forEach(j => {
-              foundJobs.push({
-                ...j,
-                vendor_id: vId,
-                token: 'demo-token' // Simplified for demo
-              });
-            });
+      if (!data || !data.vendors) return [];
+      const drivers = [];
+      const seen = new Set();
+      Object.values(data.vendors).forEach(v => {
+        (v.drivers || []).forEach(d => {
+          if (!seen.has(d.name)) {
+            seen.add(d.name);
+            drivers.push({ ...d, vendorId: v.profile.id, vendorName: v.profile.company_name });
           }
         });
+      });
+      return drivers;
+    }
+
+    function getDriverJobs(driverName) {
+      const data = getMockData();
+      if (!data || !data.vendors) return [];
+      let jobs = [];
+      Object.values(data.vendors).forEach(v => {
+        (v.jobs || []).forEach(j => {
+          if (j.driver_name === driverName) {
+            jobs.push({ ...j, vendorName: v.profile.company_name });
+          }
+        });
+      });
+      return jobs;
+    }
+
+    // Populate driver select
+    const drivers = getAllDrivers();
+    const select = document.getElementById('driver-select');
+    if (drivers.length === 0) {
+      select.innerHTML = '<option value="" disabled selected>No drivers registered yet</option>';
+    } else {
+      select.innerHTML = '<option value="" disabled selected>Select your name…</option>';
+      drivers.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.name;
+        opt.textContent = `${d.name} — ${d.vendorName}`;
+        select.appendChild(opt);
+      });
+    }
+
+    // Login handler
+    document.getElementById('btn-login').addEventListener('click', () => {
+      const name = select.value;
+      const pin = document.getElementById('driver-pin').value;
+      if (!name) return alert('Please select your name');
+      if (pin !== '1234') return alert('Incorrect PIN');
+      showDashboard(name);
+    });
+
+    // Job code search
+    document.getElementById('btn-search').addEventListener('click', () => {
+      const code = document.getElementById('job-code-input').value.trim();
+      if (!code) return;
+      window.location.href = `/driver.html?job=${encodeURIComponent(code)}&t=demo-token`;
+    });
+
+    // Logout
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      document.getElementById('login-screen').style.display = 'block';
+      document.getElementById('dashboard-screen').style.display = 'none';
+    });
+
+    function showDashboard(driverName) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard-screen').style.display = 'block';
+      document.getElementById('driver-greeting').textContent = `Welcome, ${driverName}`;
+
+      const jobs = getDriverJobs(driverName);
+      const container = document.getElementById('job-list');
+      container.innerHTML = '';
+
+      if (jobs.length === 0) {
+        container.innerHTML = `
+          <div class="card" style="text-align: center; padding: 2rem;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚛</div>
+            <p style="color: var(--text2);">No jobs assigned to you yet.</p>
+          </div>
+        `;
+        return;
       }
 
-      setTimeout(() => {
-        btn.innerText = 'Find My Jobs';
-        btn.disabled = false;
+      jobs.forEach(job => {
+        const el = document.createElement('a');
+        el.href = `/driver.html?job=${job.job_code}&t=demo-token`;
+        el.className = 'card';
+        el.style.display = 'block';
+        el.style.textDecoration = 'none';
+        el.style.marginBottom = '0.75rem';
+        el.style.borderLeft = '4px solid var(--teal)';
+        if (job.status === 'in_transit') el.style.borderLeftColor = 'var(--amber)';
+        if (job.status === 'delivered' || job.status === 'epod_pending') el.style.borderLeftColor = 'var(--green)';
 
-        if (foundJobs.length > 0) {
-          resultsDiv.style.display = 'block';
-          foundJobs.forEach(job => {
-            const el = document.createElement('a');
-            el.href = `/driver.html?job=${job.job_code}&t=${job.token}`;
-            el.className = 'card';
-            el.style.textDecoration = 'none';
-            el.style.display = 'block';
-            el.style.marginBottom = '0.75rem';
-            el.style.borderLeft = '4px solid var(--teal)';
-            
-            el.innerHTML = `
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="mono text-gold">${job.job_code}</span>
-                <span class="badge badge-intransit">${job.status.toUpperCase()}</span>
-              </div>
-              <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: var(--text);">
-                ${job.origin.split(',')[0]} → ${job.destination.split(',')[0]}
-              </p>
-            `;
-            jobList.appendChild(el);
-          });
-        } else {
-          noJobsDiv.style.display = 'block';
-        }
-      }, 800);
-    });
+        let badgeClass = 'badge-assigned';
+        if (job.status === 'in_transit') badgeClass = 'badge-intransit';
+        if (job.status === 'delivered') badgeClass = 'badge-delivered';
+
+        el.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+            <span class="mono text-gold" style="font-weight: 700;">${job.job_code}</span>
+            <span class="badge ${badgeClass}">${job.status.replace('_', ' ').toUpperCase()}</span>
+          </div>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text);">
+            ${(job.origin || '').split(',')[0]} → ${(job.destination || '').split(',')[0]}
+          </p>
+          <p style="margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--text2);">
+            ${job.vendorName} • ${job.pickup_date || ''}
+          </p>
+          <p style="margin: 0.5rem 0 0; font-size: 0.75rem; font-weight: 600; color: var(--teal);">Tap to manage →</p>
+        `;
+        container.appendChild(el);
+      });
+    }
   </script>
 </body>
 </html>

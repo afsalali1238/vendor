@@ -87,12 +87,9 @@ function setupTabs() {
 }
 
 function setupHeader() {
-  const btn = document.getElementById('btn-copy-link');
-  if (btn) {
-    btn.addEventListener('click', () => {
-      const link = `${window.location.origin}/book.html?vendor=${currentVendor.id}`;
-      window.open(link, '_blank');
-    });
+  const link = document.getElementById('btn-copy-link');
+  if (link && currentVendor) {
+    link.href = `${window.location.origin}/book.html?vendor=${currentVendor.id}`;
   }
 }
 
@@ -491,7 +488,7 @@ async function refreshFleet() {
         <div class="empty-state">
           <div class="empty-icon">🛻</div>
           <h4>No drivers added</h4>
-          <p>Add drivers to your fleet to assign them to jobs.</p>
+          <p>Tap "+ Add Driver" above to register your fleet.</p>
         </div>
       `;
       return;
@@ -501,20 +498,24 @@ async function refreshFleet() {
     drivers.forEach(d => {
       const el = document.createElement('div');
       el.className = 'card';
-      el.style.display = 'flex';
-      el.style.justifyContent = 'space-between';
-      el.style.alignItems = 'center';
 
       const statusBadge = d.active 
         ? '<span class="badge badge-intransit">ON JOB</span>'
         : '<span class="badge badge-delivered">AVAILABLE</span>';
 
       el.innerHTML = `
-        <div>
-          <h4 style="margin:0">${d.name}</h4>
-          <p style="margin:0; font-size:0.875rem">${d.vehicle_type} • ${d.plate}</p>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0.5rem;">
+          <div>
+            <h4 style="margin:0">${d.name}</h4>
+            <p style="margin:0.25rem 0 0; font-size:0.875rem; color: var(--text2);">${d.vehicle_type} • ${d.plate}</p>
+            <p style="margin:0.25rem 0 0; font-size:0.875rem; color: var(--text2);">📞 ${d.phone || 'N/A'}</p>
+          </div>
+          <div>${statusBadge}</div>
         </div>
-        <div>${statusBadge}</div>
+        <div style="display:flex; gap:0.5rem; margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+          <a href="/driver-login.html" target="_blank" class="btn btn-outline" style="flex:1; text-align:center; padding:0.35rem; font-size:0.75rem; text-decoration:none; border-color: var(--teal); color: var(--teal);">Open Driver Portal</a>
+          <a href="https://wa.me/${(d.phone || '').replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-outline" style="flex:1; text-align:center; padding:0.35rem; font-size:0.75rem; text-decoration:none;">WhatsApp Driver</a>
+        </div>
       `;
       container.appendChild(el);
     });
