@@ -25,20 +25,47 @@
       <h2 style="margin-bottom: 1rem;">Quote Declined</h2>
       <p>You have declined the quote for job <strong id="job-code" class="mono text-gold"></strong>.</p>
       
-      <div class="card" style="margin-top: 2rem; text-align: left;">
+      <!-- Decline Reason -->
+      <div class="card" style="margin-top: 1.5rem; text-align: left;">
+        <h4 style="margin-top: 0;">Help us improve — why did you decline?</h4>
+        <form id="decline-reason-form">
+          <div class="form-group">
+            <select id="decline-reason" class="form-input">
+              <option value="">Select a reason (optional)</option>
+              <option value="price_too_high">Price too high</option>
+              <option value="found_alternative">Found an alternative</option>
+              <option value="timing_issue">Timing doesn't work</option>
+              <option value="no_longer_needed">No longer needed</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group" id="notes-group" style="display: none;">
+            <textarea id="decline-notes" class="form-input" rows="2" placeholder="Tell us more..." style="resize: vertical;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-outline btn-block">Send Feedback</button>
+        </form>
+      </div>
+
+      <!-- Contact Provider -->
+      <div class="card" style="margin-top: 1rem; text-align: left;">
         <h4 style="margin-top: 0;">Want to negotiate or adjust the details?</h4>
         <p style="font-size: 0.875rem;">Contact the transport provider directly via WhatsApp to discuss your requirements.</p>
-        <button id="btn-contact" class="btn btn-outline btn-block" style="margin-top: 1rem;">Contact Provider</button>
+        <a id="btn-whatsapp" href="#" class="btn btn-primary btn-block" style="margin-top: 1rem; text-decoration: none; display: none;" target="_blank">💬 Chat on WhatsApp</a>
+        <button id="btn-contact-fallback" class="btn btn-outline btn-block" style="margin-top: 0.5rem;">📞 Contact Provider</button>
       </div>
+
+      <!-- Request Revised Quote -->
+      <a href="#" id="btn-new-quote" class="btn btn-outline btn-block" style="margin-top: 1rem; text-decoration: none;">🔄 Request a Revised Quote</a>
     </div>
   </main>
 
   <script type="module">
-    import { clientDeclineQuote } from '/js/supabase.js';
+    import { clientDeclineQuote, getJobByCode, getVendorProfileById } from '/js/supabase.js';
 
     async function init() {
       const urlParams = new URLSearchParams(window.location.search);
       const jobCode = urlParams.get('job');
+      const vendorParam = urlParams.get('v');
 
       if (!jobCode) {
         document.getElementById('loading').innerHTML = '<p class="text-red">Invalid link.</p>';
@@ -53,11 +80,54 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('content').style.display = 'block';
 
-        // For MVP, button just goes back or closes since we don't have vendor whatsapp number easily available 
-        // without another query. Actually, we can just say "Please reply in the WhatsApp chat".
-        document.getElementById('btn-contact').addEventListener('click', () => {
-          alert('Please reply directly in your existing WhatsApp chat with the provider.');
+        // Try to get vendor WhatsApp number
+        let vendorWhatsApp = null;
+        if (vendorParam) {
+          try {
+            const vendorProfile = await getVendorProfileById(vendorParam);
+            if (vendorProfile) {
+              vendorWhatsApp = vendorProfile.whatsapp || vendorProfile.phone;
+            }
+          } catch (e) { /* silent */ }
+        }
+
+        // WhatsApp button
+        if (vendorWhatsApp) {
+          const waBtn = document.getElementById('btn-whatsapp');
+          const cleanPhone = vendorWhatsApp.replace(/\D/g, '');
+          const msg = encodeURIComponent(`Hi, I declined the quote for ${jobCode} but I'd like to discuss further.`);
+          waBtn.href = `https://wa.me/${cleanPhone}?text=${msg}`;
+          waBtn.style.display = 'block';
+          document.getElementById('btn-contact-fallback').style.display = 'none';
+        } else {
+          document.getElementById('btn-contact-fallback').addEventListener('click', () => {
+            alert('Please reply directly in your existing WhatsApp chat with the provider.');
+          });
+        }
+
+        // Request revised quote → redirect to booking page
+        const newQuoteBtn = document.getElementById('btn-new-quote');
+        if (vendorParam) {
+          newQuoteBtn.href = `/book.html?v=${vendorParam}`;
+        } else {
+          newQuoteBtn.href = '/book.html';
+        }
+
+        // Decline reason form
+        document.getElementById('decline-reason').addEventListener('change', (e) => {
+          document.getElementById('notes-group').style.display = 
+            e.target.value === 'other' ? 'block' : 'none';
         });
+
+        document.getElementById('decline-reason-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const reason = document.getElementById('decline-reason').value;
+          const notes = document.getElementById('decline-notes')?.value || '';
+          // In production, this would save to DB
+          console.log('[Decline Feedback]', { jobCode, reason, notes });
+          e.target.innerHTML = '<p style="color: var(--green); margin: 0;">✅ Thank you for your feedback!</p>';
+        });
+
       } catch (err) {
         console.error(err);
         document.getElementById('loading').innerHTML = '<p class="text-red">Failed to decline quote. Please try again.</p>';

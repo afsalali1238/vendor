@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kasper-v2';
+const CACHE_NAME = 'kasper-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -6,9 +6,11 @@ const ASSETS = [
   '/demo.html',
   '/driver.html',
   '/book.html',
+  '/decline.html',
   '/ops.html',
   '/css/app.css',
   '/js/vendor.js',
+  '/js/book.js',
   '/js/supabase.js',
   '/js/auth.js',
   '/icon.png'

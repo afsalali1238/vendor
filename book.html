@@ -11,11 +11,21 @@
 <body>
 
   <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); text-align: center;">
-    <h3 style="margin: 0;">Request a Quote</h3>
+    <h3 style="margin: 0;" id="header-title">Request a Quote</h3>
+    <p id="header-vendor" style="margin: 0.25rem 0 0 0; font-size: 0.8rem; color: var(--text2); display: none;"></p>
   </header>
 
   <main class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
-    <div class="card">
+
+    <!-- Error: no vendor param -->
+    <div id="error-screen" style="display: none; text-align: center; margin-top: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+      <h3 style="color: var(--amber);">Invalid Booking Link</h3>
+      <p>This booking link is missing a vendor reference. Please contact the service provider for a valid link.</p>
+    </div>
+
+    <!-- Booking form -->
+    <div class="card" id="form-card">
       <p style="margin-top: 0;">Fill out the details below to receive a professional quote from the transport provider.</p>
 
       <form id="booking-form" style="margin-top: 1.5rem;">
@@ -61,14 +71,32 @@
           <input type="text" id="field-name" class="form-input" required>
         </div>
 
+        <div class="form-group">
+          <label class="form-label">Phone Number <span style="color: var(--text2);">(+971...)</span></label>
+          <input type="tel" id="field-phone" class="form-input" placeholder="+971 50 123 4567" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address <span style="color: var(--text2);">(optional)</span></label>
+          <input type="email" id="field-email" class="form-input" placeholder="you@company.com">
+        </div>
+
         <button type="submit" id="btn-submit" class="btn btn-primary btn-block" style="margin-top: 1rem; font-size: 1.125rem;">Submit Request</button>
       </form>
     </div>
 
+    <!-- Success screen -->
     <div id="success-screen" style="display: none; text-align: center; margin-top: 2rem;">
       <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
-      <h3 class="text-green">Request Sent</h3>
-      <p>Your enquiry has been submitted successfully. The provider will contact you shortly with a quote.</p>
+      <h3 class="text-green">Request Sent Successfully</h3>
+
+      <div class="card" style="margin-top: 1.5rem; text-align: left;">
+        <p style="margin-top: 0; font-size: 0.875rem; color: var(--text2);">Your Reference Number</p>
+        <h2 style="margin: 0; color: var(--gold); font-family: var(--mono); font-size: 1.75rem; letter-spacing: 0.05em;" id="ref-code"></h2>
+        <p style="margin-bottom: 0; font-size: 0.875rem; color: var(--text2); margin-top: 0.75rem;">Save this number to track your shipment.</p>
+      </div>
+
+      <p id="success-contact" style="margin-top: 1.25rem; font-size: 0.875rem; color: var(--text2);"></p>
     </div>
   </main>
 

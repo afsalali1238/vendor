@@ -12,7 +12,7 @@
 <body>
   
   <header style="padding: 1rem; border-bottom: 1px solid var(--border); background: var(--surf); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
-    <h3 style="margin: 0;">Vendor Portal</h3>
+    <h3 style="margin: 0;" id="header-company">Vendor Portal</h3>
     <div style="display: flex; gap: 0.5rem;">
       <button id="btn-settings" class="btn btn-outline" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem; border-color: var(--border); color: var(--text2);">⚙️</button>
       <button id="btn-copy-link" class="btn btn-outline" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem; border-color: var(--teal); color: var(--teal);">Booking Link</button>
@@ -47,7 +47,7 @@
     <!-- Tab 3: Fleet -->
     <section id="tab-fleet" class="tab-content" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2>My Fleet</h2>
+        <h2>My Drivers</h2>
         <button id="addDriverBtn" class="btn btn-primary" style="min-height: 32px; padding: 0.25rem 0.75rem; font-size: 0.875rem;">+ Add Driver</button>
       </div>
       <div id="fleet-list">
@@ -89,7 +89,7 @@
     </a>
     <a href="#fleet" class="nav-item" data-tab="tab-fleet">
       <span class="nav-icon">🛻</span>
-      <span>Fleet</span>
+      <span>Drivers</span>
     </a>
     <a href="#payments" class="nav-item" data-tab="tab-payments">
       <span class="nav-icon">💰</span>
@@ -98,6 +98,20 @@
   </nav>
 
   <!-- Modals -->
+
+  <!-- Vendor Login Modal (Demo Only) -->
+  <div id="loginModal" class="modal-overlay" style="z-index: 3000;">
+    <div class="modal-content" style="transform: translateY(0);">
+      <h3>Select Vendor Account</h3>
+      <div class="form-group" style="margin-top: 1rem;">
+        <select id="vendor-select" class="form-input">
+          <option value="v-1">Kasper Demo Transport</option>
+          <option value="v-2">Velocity Logistics</option>
+        </select>
+      </div>
+      <button id="btnLogin" class="btn btn-primary btn-block" style="margin-top: 1rem;">Enter Portal</button>
+    </div>
+  </div>
   <!-- Assign Driver Modal -->
   <div id="assignDriverModal" class="modal-overlay">
     <div class="modal-content">
@@ -148,6 +162,10 @@
         <div class="form-group">
           <label class="form-label">Company Name</label>
           <input type="text" id="set-company" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">WhatsApp Number (+971...)</label>
+          <input type="tel" id="set-whatsapp" class="form-input" placeholder="+971501234567" required>
         </div>
         <div class="form-group">
           <label class="form-label">TRN (VAT Number)</label>

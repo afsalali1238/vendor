@@ -1,5 +1,5 @@
 import { 
-  getVendorProfile, getVendorRFQs, submitRFQQuote, 
+  getVendorProfile, updateVendorProfile, getVendorRFQs, submitRFQQuote, 
   getActiveJobs, getPaymentJobs, getVendorDrivers, 
   assignDriver, addDriver 
 } from '/js/supabase.js';
@@ -14,9 +14,22 @@ let currentTab = 'tab-rfqs';
 async function init() {
   try {
     const user = await requireVendorAuth();
-    if (!user) return; // Will redirect
+    if (!user) {
+      document.getElementById('loginModal').classList.add('active');
+      document.getElementById('btnLogin').addEventListener('click', () => {
+        const selected = document.getElementById('vendor-select').value;
+        localStorage.setItem('kasper_active_vendor', selected);
+        window.location.reload();
+      });
+      return;
+    }
 
     currentVendor = await getVendorProfile();
+
+    // Show company name in header
+    if (currentVendor.company_name) {
+      document.getElementById('header-company').innerText = currentVendor.company_name;
+    }
 
     setupTabs();
     setupModals();
@@ -91,6 +104,7 @@ function setupLogout() {
   const btn = document.getElementById('logoutBtn');
   if (btn) {
     btn.addEventListener('click', async () => {
+      localStorage.removeItem('kasper_active_vendor');
       await logout();
       window.location.href = '/index.html';
     });
@@ -105,6 +119,7 @@ function setupSettings() {
 
   if (btn) btn.addEventListener('click', () => {
     document.getElementById('set-company').value = currentVendor.company_name || '';
+    document.getElementById('set-whatsapp').value = currentVendor.whatsapp || currentVendor.phone || '';
     document.getElementById('set-trn').value = currentVendor.trn || '';
     document.getElementById('set-bank-name').value = currentVendor.bank_name || '';
     document.getElementById('set-iban').value = currentVendor.iban || '';
@@ -122,14 +137,19 @@ function setupSettings() {
     try {
       const updates = {
         company_name: document.getElementById('set-company').value,
+        whatsapp: document.getElementById('set-whatsapp').value,
         trn: document.getElementById('set-trn').value,
         bank_name: document.getElementById('set-bank-name').value,
         iban: document.getElementById('set-iban').value
       };
       
-      // We need updateVendorProfile in supabase.js
-      // await updateVendorProfile(updates);
+      await updateVendorProfile(updates);
       Object.assign(currentVendor, updates);
+      
+      // Update header with new company name
+      if (updates.company_name) {
+        document.getElementById('header-company').innerText = updates.company_name;
+      }
       
       modal.classList.remove('active');
       alert('Settings saved!');
@@ -233,6 +253,11 @@ async function refreshRFQs() {
         <p><strong>Route:</strong> ${job.origin} → ${job.destination}</p>
         <p><strong>Date:</strong> ${job.pickup_date}</p>
         <p><strong>Equipment:</strong> ${job.cargo_type || job.equipment_type}</p>
+        <div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--surf2); border-radius: var(--radius); font-size: 0.875rem;">
+          <p style="margin:0"><strong>Client:</strong> ${job.client_company}${job.client_name ? ' — ' + job.client_name : ''}</p>
+          ${job.client_phone ? `<p style="margin:0.25rem 0 0 0">📞 <a href="tel:${job.client_phone}" style="color: var(--teal);">${job.client_phone}</a></p>` : ''}
+          ${job.client_email ? `<p style="margin:0.25rem 0 0 0">✉️ <a href="mailto:${job.client_email}" style="color: var(--teal);">${job.client_email}</a></p>` : ''}
+        </div>
       `;
 
       if (rfq.status === 'sent') {

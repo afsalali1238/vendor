@@ -19,12 +19,16 @@ export async function requireVendorAuth() {
   const { data: { session }, error } = await supabase.auth.getSession();
 
   if (error || !session) {
-    // DEMO MODE: If no session, return a mock user instead of redirecting
-    console.warn('[Auth] No session found. Entering Demo Mode.');
+    // DEMO MODE: If no session, require a selected vendor
+    console.warn('[Auth] No session found. Checking Demo Mode.');
+    const activeVendor = localStorage.getItem('kasper_active_vendor');
+    if (!activeVendor) {
+      return null; // Signals vendor.js to show login modal
+    }
     return {
-      id: 'demo-vendor-123',
+      id: activeVendor,
       phone: '+971500000000',
-      user_metadata: { company_name: 'Demo Transport LLC' }
+      user_metadata: { company_name: activeVendor }
     };
   }
 
@@ -141,6 +145,8 @@ export async function generateDriverToken(jobId, driverId, vendorId) {
     // Demo Mode
     return 'DEMO_TOKEN_' + Math.random().toString(36).substring(7);
   }
+  
+  const response = await fetch(
     `${window.__ENV?.SUPABASE_URL || ''}/functions/v1/generate-driver-token`,
     {
       method: 'POST',

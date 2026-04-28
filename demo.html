@@ -67,22 +67,31 @@
       
       <a href="/vendor.html" class="link-card" target="_blank" style="border-left: 4px solid var(--teal);">
         <div><span class="link-title">Vendor Dashboard</span> <span class="badge-role">VENDOR</span></div>
-        <div class="link-desc">Manage RFQs, Active Jobs, Fleet, and Payments. (Requires Login)</div>
-      </a>
-
-      <a href="/book.html" class="link-card" target="_blank" style="border-left: 4px solid var(--gold);">
-        <div><span class="link-title">Client Booking Form</span> <span class="badge-role">CLIENT</span></div>
-        <div class="link-desc">Where clients submit new transport requests.</div>
-      </a>
-
-      <a href="/driver.html" class="link-card" target="_blank" style="border-left: 4px solid #fff;">
-        <div><span class="link-title">Driver Dashboard</span> <span class="badge-role">DRIVER</span></div>
-        <div class="link-desc">For tracking and ePOD. Note: In live mode, this requires a valid job token (e.g. ?job=123).</div>
+        <div class="link-desc">Manage RFQs, Active Jobs, Drivers, and Payments. Select a vendor on login.</div>
       </a>
 
       <a href="/ops.html" class="link-card" target="_blank" style="border-left: 4px solid #ff4444;">
         <div><span class="link-title">Internal Admin (KASLO)</span> <span class="badge-role">ADMIN</span></div>
         <div class="link-desc">Kasper Technologies control tower for internal staff.</div>
+      </a>
+
+      <a href="/driver.html" class="link-card" target="_blank" style="border-left: 4px solid #fff;">
+        <div><span class="link-title">Driver Dashboard</span> <span class="badge-role">DRIVER</span></div>
+        <div class="link-desc">For tracking and ePOD. Requires a valid job token (e.g. ?job=KSP-7701).</div>
+      </a>
+    </div>
+
+    <div class="link-group">
+      <h3>Client Booking Links <span style="font-size: 0.75rem; color: var(--text2); font-weight: 400;">(vendor-specific)</span></h3>
+      
+      <a href="/book.html?v=v-1" class="link-card" target="_blank" style="border-left: 4px solid var(--gold);">
+        <div><span class="link-title">Book → Kasper Demo Transport</span> <span class="badge-role">CLIENT</span></div>
+        <div class="link-desc">Client booking form routed to Vendor 1. Enquiries appear in their RFQ tab.</div>
+      </a>
+
+      <a href="/book.html?v=v-2" class="link-card" target="_blank" style="border-left: 4px solid var(--gold);">
+        <div><span class="link-title">Book → Velocity Logistics</span> <span class="badge-role">CLIENT</span></div>
+        <div class="link-desc">Client booking form routed to Vendor 2. Enquiries appear in their RFQ tab.</div>
       </a>
     </div>
 

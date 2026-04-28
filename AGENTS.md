@@ -102,6 +102,17 @@ job_code format: KSP-{4 digit zero-padded number} e.g. KSP-0042
 - Currency format: AED 1,234.00 (always AED prefix, always 2 decimal places).
 - Invoice number format: INV-{job_code} e.g. INV-KSP-0042
 
+## Price convention
+
+`quoted_price` in the jobs table is **ALWAYS stored as the total inc-VAT amount** (AED).
+
+- Ex-VAT is always computed at display time: `price_ex_vat = quoted_price / 1.05`
+- VAT amount is always computed: `vat_amount = quoted_price - price_ex_vat`
+- The database has generated columns (`price_ex_vat`, `vat_amount`) that enforce this automatically.
+- **Never store ex-VAT as a separate manually-set column.** The generated columns handle it.
+- `vendor_price` follows the same convention — stored as inc-VAT.
+- When displaying prices in PDFs or UI, always show three lines: Ex-VAT, 5% VAT, Total Inc-VAT.
+
 ## UI / UX rules
 
 - Mobile-first: design at 375px viewport width. Test there before desktop.
