@@ -90,7 +90,7 @@ function setupHeader() {
   const btn = document.getElementById('btn-copy-link');
   if (btn) {
     btn.addEventListener('click', () => {
-      const link = `${window.location.origin}/book.html?v=${currentVendor.id}`;
+      const link = `${window.location.origin}/book.html?vendor=${currentVendor.id}`;
       navigator.clipboard.writeText(link).then(() => {
         const originalText = btn.innerText;
         btn.innerText = 'Copied!';

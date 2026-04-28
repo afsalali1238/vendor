@@ -192,7 +192,7 @@ export function buildDriverUrl(jobCode, token) {
 }
 
 export function buildBookingUrl(vendorId) {
-  return `${window.location.origin}/book.html?v=${vendorId}`;
+  return `${window.location.origin}/book.html?vendor=${vendorId}`;
 }
 
 // ── UTILITIES ────────────────────────────────────────────────────

@@ -54,9 +54,9 @@ export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return {
-      id: 'demo-vendor-123',
-      phone: '+971500000000',
-      user_metadata: { company_name: 'Demo Transport LLC' }
+      id: '11111111-1111-1111-1111-111111111111',
+      phone: '+971501234567',
+      user_metadata: { company_name: 'Al Noor Transport LLC' }
     };
   }
   return user;

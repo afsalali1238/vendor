@@ -27,15 +27,15 @@ function handle(result) {
 // ── DEMO MODE HELPER ─────────────────────────────────────────────
 const SEED_DATA = {
   vendors: {
-    "v-1": {
+    "11111111-1111-1111-1111-111111111111": {
       profile: {
-        id: 'v-1',
-        company_name: 'Kasper Demo Transport',
-        trn: '123456789012345',
-        bank_name: 'Demo Bank UAE',
-        bank_iban: 'AE00 0000 0000 0000 0000 000',
-        phone: '+971500000000',
-        whatsapp: '+971500000000',
+        id: '11111111-1111-1111-1111-111111111111',
+        company_name: 'Al Noor Transport LLC',
+        trn: '100123456700003',
+        bank_name: 'Emirates NBD',
+        bank_iban: 'AE070331234567890123456',
+        phone: '+971501234567',
+        whatsapp: '+971501234567',
         plan: 'pro'
       },
       rfqs: [
@@ -104,15 +104,15 @@ const SEED_DATA = {
         { id: 'd3', name: 'John Doe', phone: '+971503333333', plate: 'DXB 54321', vehicle_type: 'Crane Truck', active: true }
       ]
     },
-    "v-2": {
+    "22222222-2222-2222-2222-222222222222": {
       profile: {
-        id: 'v-2',
-        company_name: 'Velocity Logistics',
-        trn: '987654321098765',
-        bank_name: 'Velocity Bank UAE',
-        bank_iban: 'AE11 1111 1111 1111 1111 111',
-        phone: '+971509999999',
-        whatsapp: '+971509999999',
+        id: '22222222-2222-2222-2222-222222222222',
+        company_name: 'Gulf Freight Co.',
+        trn: '100987654300003',
+        bank_name: 'ADCB',
+        bank_iban: 'AE450030009876543210987',
+        phone: '+971559876543',
+        whatsapp: '+971559876543',
         plan: 'growth'
       },
       rfqs: [],
@@ -127,8 +127,8 @@ function getMockData() {
   if (stored) {
     try { 
       const data = JSON.parse(stored);
-      // Verify schema is new multi-vendor version
-      if (data && data.vendors) return data;
+      // Verify schema is new multi-vendor version with UUIDs
+      if (data && data.vendors && !data.vendors['v-1']) return data;
     } catch(e) {}
   }
   // Initialize if empty or old schema
@@ -245,9 +245,10 @@ export async function createJobEnquiry(payload) {
       created_at: new Date().toISOString()
     };
     
-    // Check if ?v= was passed from book.html
-    const targetVendorId = new URLSearchParams(window.location.search).get('v');
-    const vendorToUse = (targetVendorId && data.vendors[targetVendorId]) ? targetVendorId : 'v-1';
+    // Check if ?vendor= or ?v= was passed from book.html
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetVendorId = urlParams.get('vendor') || urlParams.get('v');
+    const vendorToUse = (targetVendorId && data.vendors[targetVendorId]) ? targetVendorId : '11111111-1111-1111-1111-111111111111';
 
     data.vendors[vendorToUse].rfqs.unshift({
       id: 'rfq-' + Math.random().toString(36).substring(7),
