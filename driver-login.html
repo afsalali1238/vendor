@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Driver Login - Kasper</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <header style="padding: 2rem 1rem; text-align: center;">
+    <img src="/icon.png" alt="Logo" style="height: 50px; margin-bottom: 1rem;">
+    <h2>Driver Login</h2>
+    <p style="color: var(--text2);">Enter your phone number to see your jobs.</p>
+  </header>
+
+  <main class="container" style="max-width: 400px;">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Phone Number (+971...)</label>
+        <input type="tel" id="driver-phone" class="form-input" placeholder="+971500000000" required>
+      </div>
+      <button id="btn-login" class="btn btn-primary btn-block">Find My Jobs</button>
+    </div>
+
+    <div id="results" style="margin-top: 2rem; display: none;">
+      <h3 style="margin-bottom: 1rem;">Your Active Jobs</h3>
+      <div id="job-list"></div>
+    </div>
+
+    <div id="no-jobs" style="margin-top: 2rem; display: none; text-align: center;">
+      <div class="empty-icon">🚛</div>
+      <p>No active jobs found for this number.</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { supabase } from '/js/supabase.js';
+
+    // Demo Mode Logic
+    function getMockData() {
+      const stored = localStorage.getItem('kasper_mock_data');
+      return stored ? JSON.parse(stored) : null;
+    }
+
+    document.getElementById('btn-login').addEventListener('click', () => {
+      const phone = document.getElementById('driver-phone').value.trim();
+      if (!phone) return alert('Please enter your phone number');
+
+      const btn = document.getElementById('btn-login');
+      btn.innerText = 'Searching...';
+      btn.disabled = true;
+
+      // In Demo Mode, search mock data
+      const data = getMockData();
+      const resultsDiv = document.getElementById('results');
+      const noJobsDiv = document.getElementById('no-jobs');
+      const jobList = document.getElementById('job-list');
+
+      resultsDiv.style.display = 'none';
+      noJobsDiv.style.display = 'none';
+      jobList.innerHTML = '';
+
+      let foundJobs = [];
+
+      if (data && data.vendors) {
+        Object.keys(data.vendors).forEach(vId => {
+          const vendor = data.vendors[vId];
+          const driver = vendor.drivers.find(d => d.phone === phone);
+          if (driver) {
+            // Find jobs assigned to this driver ID in this vendor
+            const jobs = vendor.jobs.filter(j => j.driver_id === driver.id && j.status !== 'paid');
+            jobs.forEach(j => {
+              foundJobs.push({
+                ...j,
+                vendor_id: vId,
+                token: 'demo-token' // Simplified for demo
+              });
+            });
+          }
+        });
+      }
+
+      setTimeout(() => {
+        btn.innerText = 'Find My Jobs';
+        btn.disabled = false;
+
+        if (foundJobs.length > 0) {
+          resultsDiv.style.display = 'block';
+          foundJobs.forEach(job => {
+            const el = document.createElement('a');
+            el.href = `/driver.html?job=${job.job_code}&t=${job.token}`;
+            el.className = 'card';
+            el.style.textDecoration = 'none';
+            el.style.display = 'block';
+            el.style.marginBottom = '0.75rem';
+            el.style.borderLeft = '4px solid var(--teal)';
+            
+            el.innerHTML = `
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="mono text-gold">${job.job_code}</span>
+                <span class="badge badge-intransit">${job.status.toUpperCase()}</span>
+              </div>
+              <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: var(--text);">
+                ${job.origin.split(',')[0]} → ${job.destination.split(',')[0]}
+              </p>
+            `;
+            jobList.appendChild(el);
+          });
+        } else {
+          noJobsDiv.style.display = 'block';
+        }
+      }, 800);
+    });
+  </script>
+</body>
+</html>

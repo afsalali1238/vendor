@@ -65,19 +65,27 @@
     <div class="link-group">
       <h3>Core Portals</h3>
       
-      <a href="/vendor.html" class="link-card" target="_blank" style="border-left: 4px solid var(--teal);">
+      <div class="link-card" style="border-left: 4px solid var(--teal); display: block; cursor: default;">
         <div><span class="link-title">Vendor Dashboard</span> <span class="badge-role">VENDOR</span></div>
-        <div class="link-desc">Manage RFQs, Active Jobs, Drivers, and Payments. Select a vendor on login.</div>
-      </a>
+        <div class="link-desc" style="margin-bottom: 1rem;">Manage RFQs, Active Jobs, Drivers, and Payments.</div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <button class="btn btn-outline" style="text-align: left; padding: 0.75rem;" onclick="loginVendor('11111111-1111-1111-1111-111111111111', 'Al Noor Transport LLC')">
+            <strong style="color: var(--gold);">Login: Al Noor Transport LLC</strong>
+          </button>
+          <button class="btn btn-outline" style="text-align: left; padding: 0.75rem;" onclick="loginVendor('22222222-2222-2222-2222-222222222222', 'Gulf Freight Co.')">
+            <strong style="color: var(--teal);">Login: Gulf Freight Co.</strong>
+          </button>
+        </div>
+      </div>
 
       <a href="/ops.html" class="link-card" target="_blank" style="border-left: 4px solid #ff4444;">
         <div><span class="link-title">Internal Admin (KASLO)</span> <span class="badge-role">ADMIN</span></div>
         <div class="link-desc">Kasper Technologies control tower for internal staff.</div>
       </a>
 
-      <a href="/driver.html" class="link-card" target="_blank" style="border-left: 4px solid #fff;">
-        <div><span class="link-title">Driver Dashboard</span> <span class="badge-role">DRIVER</span></div>
-        <div class="link-desc">For tracking and ePOD. Requires a valid job token (e.g. ?job=KSP-7701).</div>
+      <a href="/driver-login.html" class="link-card" target="_blank" style="border-left: 4px solid #fff;">
+        <div><span class="link-title">Driver Portal</span> <span class="badge-role">DRIVER</span></div>
+        <div class="link-desc">Enter phone number to see assigned jobs. Just like the Kaslo flow.</div>
       </a>
     </div>
 
@@ -95,6 +103,18 @@
       </a>
     </div>
 
+    <div class="link-group">
+      <h3>Quick Test Links <span style="font-size: 0.75rem; color: var(--text2); font-weight: 400;">(direct access)</span></h3>
+      <a href="/driver.html?job=KSP-7702&t=demo-token" class="link-card" target="_blank" style="border-left: 4px solid var(--green);">
+        <div><span class="link-title">Driver View: Job KSP-7702</span> <span class="badge-role">DRIVER</span></div>
+        <div class="link-desc">Simulate driver ePOD flow for an in-transit job.</div>
+      </a>
+      <a href="/track.html?job=KSP-7702" class="link-card" target="_blank" style="border-left: 4px solid var(--amber);">
+        <div><span class="link-title">Tracking: Job KSP-7702</span> <span class="badge-role">CLIENT</span></div>
+        <div class="link-desc">Simulate client tracking view with live GPS simulation.</div>
+      </a>
+    </div>
+
   </main>
 
   <script>
@@ -102,6 +122,12 @@
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js');
       });
+    }
+
+    function loginVendor(id, name) {
+      sessionStorage.setItem('vendor_id', id);
+      sessionStorage.setItem('vendor_name', name);
+      window.open('/vendor.html', '_blank');
     }
   </script>
 </body>

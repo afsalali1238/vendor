@@ -91,11 +91,7 @@ function setupHeader() {
   if (btn) {
     btn.addEventListener('click', () => {
       const link = `${window.location.origin}/book.html?vendor=${currentVendor.id}`;
-      navigator.clipboard.writeText(link).then(() => {
-        const originalText = btn.innerText;
-        btn.innerText = 'Copied!';
-        setTimeout(() => btn.innerText = originalText, 2000);
-      });
+      window.open(link, '_blank');
     });
   }
 }
