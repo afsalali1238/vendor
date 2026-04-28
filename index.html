@@ -23,7 +23,10 @@
     </div>
   </header>
 
-  <main class="container" style="padding-top: 4rem; padding-bottom: 4rem; text-align: center;">
+    <div style="position: absolute; top: 1rem; right: 1rem;">
+      <span class="badge badge-assigned" style="font-size: 0.75rem;">DEMO MODE</span>
+    </div>
+
     <h1 style="font-size: 2.5rem; line-height: 1.2; margin-bottom: 1.5rem;">
       Run your transport fleet from your <span class="text-gold">phone.</span>
     </h1>
@@ -31,9 +34,21 @@
       The all-in-one SaaS portal for UAE logistics and equipment rental SMEs. Send quotes in 60 seconds, track drivers live, and collect digital proof of delivery.
     </p>
 
-    <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 300px; margin: 0 auto 4rem;">
-      <a href="/demo.html" class="btn btn-primary" style="font-size: 1.125rem; padding: 1rem;">Launch Demo Portal</a>
-      <a href="https://wa.me/971500000000" class="btn btn-secondary" style="font-size: 1rem;">Contact Sales on WhatsApp</a>
+    <!-- Vendor Selector -->
+    <div style="max-width: 500px; margin: 0 auto 4rem; text-align: left;">
+      <h3 style="margin-bottom: 1rem; text-align: center;">Select your account to continue</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="card" style="border-left: 4px solid var(--gold); cursor: pointer; transition: transform 0.2s;" onclick="loginVendor('11111111-1111-1111-1111-111111111111', 'Al Noor Transport LLC')">
+          <h3 style="margin: 0; color: var(--gold);">Al Noor Transport LLC</h3>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Demo Vendor Account 1</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--teal); cursor: pointer; transition: transform 0.2s;" onclick="loginVendor('22222222-2222-2222-2222-222222222222', 'Gulf Freight Co.')">
+          <h3 style="margin: 0; color: var(--teal);">Gulf Freight Co.</h3>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text2);">Demo Vendor Account 2</p>
+        </div>
+      </div>
     </div>
 
     <!-- Features -->
@@ -64,6 +79,12 @@
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js');
       });
+    }
+
+    function loginVendor(id, name) {
+      sessionStorage.setItem('vendor_id', id);
+      sessionStorage.setItem('vendor_name', name);
+      window.location.href = '/vendor.html';
     }
   </script>
 </body>

@@ -124,6 +124,7 @@
       document.getElementById('job-date').innerText = jobData.pickup_date || '—';
       document.getElementById('job-cargo').innerText = jobData.cargo_type || jobData.equipment_type || '—';
 
+      // quoted_price is inc-VAT per AGENTS.md convention
       const price = parseFloat(jobData.quoted_price || 0);
       const priceExVAT = price / 1.05;
       const vatAmount = price - priceExVAT;

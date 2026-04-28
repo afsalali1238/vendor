@@ -264,8 +264,11 @@ async function refreshRFQs() {
         const form = document.createElement('form');
         form.innerHTML = `
           <div class="form-group" style="margin-top: 1rem;">
-            <label class="form-label">Your Price (AED ex-VAT)</label>
-            <input type="number" class="form-input" required min="1" step="0.01">
+            <label class="form-label">Price (inc. VAT, AED)</label>
+            <input type="number" class="form-input" required min="1" step="0.01" id="input-price-${job.job_code}">
+            <div id="breakdown-${job.job_code}" style="font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem;">
+              Ex-VAT: AED 0.00 | VAT (5%): AED 0.00 | Total: AED 0.00
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Notes (Optional)</label>
@@ -273,14 +276,30 @@ async function refreshRFQs() {
           </div>
           <button type="submit" class="btn btn-primary btn-block">Send Quote</button>
         `;
+        
+        // Add real-time breakdown listener
+        setTimeout(() => {
+          const input = form.querySelector(`#input-price-${job.job_code}`);
+          const breakdown = form.querySelector(`#breakdown-${job.job_code}`);
+          if (input && breakdown) {
+            input.addEventListener('input', (e) => {
+              const val = parseFloat(e.target.value) || 0;
+              const exVat = val / 1.05;
+              const vat = val - exVat;
+              breakdown.innerText = `Ex-VAT: AED ${formatAED(exVat)} | VAT (5%): AED ${formatAED(vat)} | Total: AED ${formatAED(val)}`;
+            });
+          }
+        }, 0);
+
         form.onsubmit = async (e) => {
           e.preventDefault();
           const btn = form.querySelector('button');
           btn.innerText = 'Sending...';
           btn.disabled = true;
           try {
-            const price = parseFloat(form.querySelectorAll('input')[0].value);
+            const priceInput = form.querySelectorAll('input')[0];
             const notes = form.querySelectorAll('input')[1].value;
+            const price = parseFloat(priceInput.value); // Storing inc-VAT total per AGENTS.md convention
             
             // 1. Update RFQ in DB
             await submitRFQQuote(rfq.id, price, notes);
@@ -293,9 +312,9 @@ async function refreshRFQs() {
             const pdfResult = await generateQuotePDF(jobMock, currentVendor);
 
             // 3. Send WhatsApp
-            const priceExVAT = price;
-            const vatAmount = price * 0.05;
-            const totalIncVAT = price + vatAmount;
+            const priceExVAT = price / 1.05;
+            const vatAmount = price - priceExVAT;
+            const totalIncVAT = price;
 
             openQuoteMessage({
               clientPhone: job.client_phone || '+971500000000', // Mock if missing
@@ -547,7 +566,10 @@ async function refreshPayments() {
           ${badge}
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h3 style="margin:0">AED ${formatAED(amount)}</h3>
+          <div>
+            <h3 style="margin:0">AED ${formatAED(amount)} <span style="font-size: 0.75rem; font-weight: normal; color: var(--text2);">inc. VAT</span></h3>
+            <p style="margin:0; font-size:0.75rem; color: var(--text2);">AED ${formatAED(amount / 1.05)} ex. VAT</p>
+          </div>
           <p style="margin:0; font-size:0.875rem">${job.client_company || 'Client'}</p>
         </div>
       `;

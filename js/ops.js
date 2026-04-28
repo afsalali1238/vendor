@@ -14,6 +14,24 @@ async function init() {
     renderVendors(vendors);
     renderJobs(jobs);
 
+    const btnDemo = document.getElementById('btn-load-demo');
+    if (jobs.length === 0 && btnDemo) {
+      btnDemo.style.display = 'block';
+      btnDemo.onclick = async () => {
+        btnDemo.innerText = 'Loading...';
+        btnDemo.disabled = true;
+        try {
+          await loadDemoData(vendors[0]?.id); // Use the first available vendor
+          window.location.reload();
+        } catch(e) {
+          console.error(e);
+          alert('Failed to load demo data');
+          btnDemo.innerText = 'Load Demo Data';
+          btnDemo.disabled = false;
+        }
+      };
+    }
+
   } catch (err) {
     console.error(err);
     document.querySelector('main').innerHTML = `
@@ -79,6 +97,64 @@ function renderJobs(jobs) {
     `;
     container.appendChild(el);
   });
+}
+
+async function loadDemoData(vendorId) {
+  if (!vendorId) throw new Error('No vendor available to assign jobs to');
+  
+  const { supabase } = await import('/js/supabase.js');
+  
+  const today = new Date();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  const dayAfter = new Date(today); dayAfter.setDate(today.getDate() + 2);
+
+  const jobs = [
+    {
+      job_code: 'KSP-DEMO-01',
+      status: 'enquiry',
+      origin: 'Jebel Ali Port, Dubai',
+      destination: 'KIZAD, Abu Dhabi',
+      cargo_type: '2x 40ft Containers',
+      pickup_date: tomorrow.toISOString().split('T')[0],
+      client_name: 'Ahmed Al Rashid',
+      client_company: 'Emirates Steel',
+      client_phone: '+971501110001',
+      vendor_id: vendorId,
+      quoted_price: null
+    },
+    {
+      job_code: 'KSP-DEMO-02',
+      status: 'quoted',
+      quoted_price: 3675.00,
+      origin: 'JAFZA, Dubai',
+      destination: 'Khalifa Port, Abu Dhabi',
+      cargo_type: 'Heavy Machinery — 35t',
+      pickup_date: dayAfter.toISOString().split('T')[0],
+      client_name: 'Sara Johnson',
+      client_company: 'Technip FMC',
+      client_phone: '+971509990002',
+      vendor_id: vendorId
+    },
+    {
+      job_code: 'KSP-DEMO-03',
+      status: 'in_transit',
+      quoted_price: 1732.50,
+      origin: 'Al Quoz Industrial 3',
+      destination: 'Dubai Investment Park',
+      cargo_type: 'Office Furniture — 3 Rooms',
+      pickup_date: today.toISOString().split('T')[0],
+      client_name: 'Raj Patel',
+      client_company: 'Majid Al Futtaim Retail',
+      client_phone: '+971554440003',
+      vendor_id: vendorId,
+      gps_lat: 25.1234,
+      gps_lng: 55.1789
+    }
+  ];
+
+  for (const job of jobs) {
+    await supabase.from('jobs').upsert(job, { onConflict: 'job_code' });
+  }
 }
 
 init();

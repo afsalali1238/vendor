@@ -111,7 +111,7 @@ function updateStatusUI() {
     document.getElementById('epod-section').style.display = 'none';
     document.getElementById('payment-section').style.display = 'block';
     document.getElementById('pay-amt').innerText = formatAED(jobData.quoted_price || 0);
-    document.getElementById('btn-pay').href = `https://telr.com/pay/${jobData.job_code}`; // Mock URL
+    // document.getElementById('btn-pay').href = `https://telr.com/pay/${jobData.job_code}`; // Mock URL
     
     if (jobData.invoice_pdf_url) document.getElementById('btn-dl-invoice').href = jobData.invoice_pdf_url;
     else document.getElementById('btn-dl-invoice').style.display = 'none';
@@ -123,6 +123,38 @@ function updateStatusUI() {
       document.getElementById('btn-pay').innerText = '✓ Paid in Full';
       document.getElementById('btn-pay').classList.replace('btn-primary', 'btn-secondary');
       document.getElementById('btn-pay').style.pointerEvents = 'none';
+      document.getElementById('btn-pay').disabled = true;
+    } else {
+      // Demo Payment Handler
+      document.getElementById('btn-pay').onclick = async () => {
+        const btn = document.getElementById('btn-pay');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner" style="width: 1rem; height: 1rem; border-width: 2px;"></div> Processing...';
+        btn.disabled = true;
+        
+        setTimeout(async () => {
+          try {
+            // Update Supabase
+            const { supabase } = await import('/js/supabase.js');
+            await supabase.from('jobs').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('job_code', jobData.job_code);
+            
+            // Show success overlay
+            document.getElementById('app').innerHTML += `
+              <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--surf); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem;">
+                <div style="font-size: 4rem; color: var(--green); margin-bottom: 1rem;">✅</div>
+                <h2 style="margin-top: 0;">Payment Successful!</h2>
+                <p style="font-size: 1.25rem; font-weight: bold;">AED ${formatAED(jobData.quoted_price || 0)} received</p>
+                <p style="color: var(--text2);">Your invoice has been sent to your email.</p>
+                <button onclick="window.location.reload()" class="btn btn-outline" style="margin-top: 2rem;">Close</button>
+              </div>
+            `;
+          } catch(e) {
+            alert('Failed to process payment');
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+          }
+        }, 2000);
+      };
     }
   } else {
     statusEl.classList.add('badge-enquiry');
