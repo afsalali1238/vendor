@@ -25,10 +25,16 @@ export async function requireVendorAuth() {
     if (!activeVendor) {
       return null; // Signals vendor.js to show login modal
     }
+    const companyName = activeVendor === '11111111-1111-1111-1111-111111111111' 
+      ? 'Al Noor Transport LLC' 
+      : activeVendor === '22222222-2222-2222-2222-222222222222' 
+      ? 'Gulf Freight Co.' 
+      : activeVendor;
+      
     return {
       id: activeVendor,
-      phone: '+971500000000',
-      user_metadata: { company_name: activeVendor }
+      phone: '+971501234567',
+      user_metadata: { company_name: companyName }
     };
   }
 
