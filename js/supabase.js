@@ -25,7 +25,7 @@ function handle(result) {
 }
 
 // ── DEMO MODE HELPER ─────────────────────────────────────────────
-const MOCK_DATA = {
+const SEED_DATA = {
   vendor: {
     id: 'demo-vendor-123',
     company_name: 'Kasper Demo Transport',
@@ -62,6 +62,19 @@ const MOCK_DATA = {
         cargo_type: '25t AC Unit',
         client_company: 'BuildRight Ltd'
       }
+    },
+    {
+      id: 'rfq-3',
+      status: 'sent',
+      jobs: {
+        job_code: 'KSP-8803',
+        service_type: 'logistics',
+        origin: 'Ajman Free Zone',
+        destination: 'Dubai Silicon Oasis',
+        pickup_date: '2026-05-05',
+        cargo_type: 'Palletized Goods (5 Tons)',
+        client_company: 'Tech Supplies LLC'
+      }
     }
   ],
   jobs: [
@@ -73,7 +86,8 @@ const MOCK_DATA = {
       destination: 'Abu Dhabi Port',
       pickup_date: '2026-04-28',
       driver_name: 'Ahmed Khan',
-      vehicle_plate: 'DXB 12345'
+      vehicle_plate: 'DXB 12345',
+      quoted_price: 1200
     },
     {
       id: 'job-2',
@@ -85,7 +99,41 @@ const MOCK_DATA = {
       gps_lat: 25.1023,
       gps_lng: 55.1634,
       driver_name: 'John Doe',
-      vehicle_plate: 'DXB 54321'
+      vehicle_plate: 'DXB 54321',
+      quoted_price: 1800
+    },
+    {
+      id: 'job-3',
+      job_code: 'KSP-7703',
+      status: 'delivered',
+      origin: 'Sharjah Industrial',
+      destination: 'Al Ain',
+      pickup_date: '2026-04-25',
+      driver_name: 'Sajid Ali',
+      vehicle_plate: 'DXB 67890',
+      quoted_price: 900
+    },
+    {
+      id: 'job-4',
+      job_code: 'KSP-7704',
+      status: 'invoiced',
+      origin: 'JAFZA',
+      destination: 'KIZAD',
+      pickup_date: '2026-04-20',
+      driver_name: 'Ahmed Khan',
+      vehicle_plate: 'DXB 12345',
+      quoted_price: 2500
+    },
+    {
+      id: 'job-5',
+      job_code: 'KSP-7705',
+      status: 'paid',
+      origin: 'Dubai Marina',
+      destination: 'Ras Al Khaimah',
+      pickup_date: '2026-04-15',
+      driver_name: 'John Doe',
+      vehicle_plate: 'DXB 54321',
+      quoted_price: 1500
     }
   ],
   drivers: [
@@ -94,6 +142,20 @@ const MOCK_DATA = {
     { id: 'd3', name: 'John Doe', phone: '+971503333333', plate: 'DXB 54321', vehicle_type: 'Crane Truck', active: true }
   ]
 };
+
+function getMockData() {
+  const stored = localStorage.getItem('kasper_mock_data');
+  if (stored) {
+    try { return JSON.parse(stored); } catch(e) {}
+  }
+  // Initialize if empty
+  localStorage.setItem('kasper_mock_data', JSON.stringify(SEED_DATA));
+  return SEED_DATA;
+}
+
+function saveMockData(data) {
+  localStorage.setItem('kasper_mock_data', JSON.stringify(data));
+}
 
 function isDemo() {
   // MVP testing: bypass auth but still use real Supabase data when possible.
@@ -111,13 +173,7 @@ const DEMO_VENDOR_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
 /** Get the current vendor's full profile */
 export async function getVendorProfile() {
-  if (isDemo()) {
-    try {
-      const result = await supabase.from('vendors').select('*').eq('id', DEMO_VENDOR_ID).single();
-      if (result.data) return result.data;
-    } catch (e) { /* fallback to mock */ }
-    return MOCK_DATA.vendor;
-  }
+  if (isDemo()) return getMockData().vendor;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
   const result = await supabase.from('vendors').select('*').eq('id', user.id).single();
@@ -126,7 +182,12 @@ export async function getVendorProfile() {
 
 /** Update vendor profile fields */
 export async function updateVendorProfile(fields) {
-  if (isDemo()) return { ...MOCK_DATA.vendor, ...fields };
+  if (isDemo()) {
+    const data = getMockData();
+    data.vendor = { ...data.vendor, ...fields };
+    saveMockData(data);
+    return data.vendor;
+  }
   const { data: { user } } = await supabase.auth.getUser();
   const result = await supabase
     .from('vendors')
@@ -141,15 +202,9 @@ export async function updateVendorProfile(fields) {
 // RFQ OPERATIONS (vendor_rfqs table)
 // ================================================================
 
-/** Get all RFQs for the current vendor — in demo, get jobs with status 'enquiry' */
+/** Get all RFQs for the current vendor */
 export async function getVendorRFQs() {
-  if (isDemo()) {
-    try {
-      const result = await supabase.from('jobs').select('*').eq('vendor_id', DEMO_VENDOR_ID).in('status', ['enquiry','quoted']).order('created_at', { ascending: false });
-      if (result.data && result.data.length > 0) return result.data;
-    } catch (e) { /* fallback */ }
-    return MOCK_DATA.rfqs;
-  }
+  if (isDemo()) return getMockData().rfqs;
   const result = await supabase
     .from('vendor_rfqs')
     .select(`*, jobs:job_id (job_code, service_type, origin, destination, pickup_date, cargo_type, equipment_type, client_company, notes, quoted_price)`)
@@ -159,7 +214,18 @@ export async function getVendorRFQs() {
 
 /** Submit a vendor's price for an RFQ */
 export async function submitRFQQuote(rfqId, vendorPrice, notes) {
-  if (isDemo()) return { id: rfqId, status: 'quoted' };
+  if (isDemo()) {
+    const data = getMockData();
+    const rfq = data.rfqs.find(r => r.id === rfqId);
+    if (rfq) {
+      rfq.status = 'quoted';
+      rfq.vendor_price = vendorPrice;
+      rfq.vendor_notes = notes;
+      saveMockData(data);
+      return rfq;
+    }
+    return { id: rfqId, status: 'quoted' };
+  }
   const result = await supabase
     .from('vendor_rfqs')
     .update({
@@ -177,14 +243,31 @@ export async function submitRFQQuote(rfqId, vendorPrice, notes) {
 /** Create a new job enquiry from book.html */
 export async function createJobEnquiry(payload) {
   if (isDemo()) {
+    const data = getMockData();
     const newEnquiry = { 
       ...payload, 
       id: 'enq-' + Math.random().toString(36).substring(7),
       job_code: 'KSP-REQ-' + Math.floor(1000 + Math.random() * 9000),
       created_at: new Date().toISOString()
     };
-    // For demo, we just simulate success
-    console.log('[Demo] Enquiry received:', newEnquiry);
+    
+    // Add to RFQs
+    data.rfqs.unshift({
+      id: 'rfq-' + Math.random().toString(36).substring(7),
+      status: 'sent',
+      jobs: {
+        job_code: newEnquiry.job_code,
+        service_type: newEnquiry.service_type || 'logistics',
+        origin: newEnquiry.origin,
+        destination: newEnquiry.destination,
+        pickup_date: newEnquiry.pickup_date,
+        cargo_type: newEnquiry.cargo_details || newEnquiry.cargo_type,
+        client_company: newEnquiry.client_company || 'New Client LLC'
+      }
+    });
+    
+    saveMockData(data);
+    console.log('[Demo] Enquiry received and saved to mock storage:', newEnquiry);
     return newEnquiry;
   }
   const result = await supabase.from('jobs').insert([payload]).select().single();
@@ -197,13 +280,7 @@ export async function createJobEnquiry(payload) {
 
 /** Get all active jobs for current vendor */
 export async function getActiveJobs() {
-  if (isDemo()) {
-    try {
-      const result = await supabase.from('jobs').select('*').eq('vendor_id', DEMO_VENDOR_ID).not('status', 'in', '("enquiry","quoted","rejected","paid")').order('created_at', { ascending: false });
-      if (result.data && result.data.length > 0) return result.data;
-    } catch (e) { /* fallback */ }
-    return MOCK_DATA.jobs;
-  }
+  if (isDemo()) return getMockData().jobs.filter(j => !['enquiry','quoted','rejected','paid'].includes(j.status));
   const result = await supabase
     .from('jobs')
     .select('*')
@@ -214,13 +291,7 @@ export async function getActiveJobs() {
 
 /** Get payment history (invoiced + paid + delivered jobs) */
 export async function getPaymentJobs() {
-  if (isDemo()) {
-    try {
-      const result = await supabase.from('jobs').select('*').eq('vendor_id', DEMO_VENDOR_ID).in('status', ['delivered','invoiced','paid']).order('updated_at', { ascending: false });
-      if (result.data && result.data.length > 0) return result.data;
-    } catch (e) { /* fallback */ }
-    return MOCK_DATA.jobs.filter(j => ['invoiced', 'paid'].includes(j.status));
-  }
+  if (isDemo()) return getMockData().jobs.filter(j => ['invoiced', 'paid'].includes(j.status));
   const result = await supabase
     .from('jobs')
     .select('*')
@@ -231,6 +302,11 @@ export async function getPaymentJobs() {
 
 /** Get a single job by job_code — for client/driver pages (uses public view) */
 export async function getJobByCode(jobCode) {
+  if (isDemo()) {
+    const data = getMockData();
+    const job = data.jobs.find(j => j.job_code === jobCode) || data.rfqs.find(r => r.jobs.job_code === jobCode)?.jobs;
+    return job;
+  }
   const result = await supabase
     .from('jobs_public')
     .select('*')
@@ -241,7 +317,20 @@ export async function getJobByCode(jobCode) {
 
 /** Assign a driver to a job */
 export async function assignDriver(jobId, driver) {
-  if (isDemo()) return { id: jobId, status: 'assigned' };
+  if (isDemo()) {
+    const data = getMockData();
+    const job = data.jobs.find(j => j.id === jobId);
+    if (job) {
+      job.status = 'assigned';
+      job.driver_id = driver.id;
+      job.driver_name = driver.name;
+      job.driver_phone = driver.phone;
+      job.vehicle_plate = driver.plate;
+      saveMockData(data);
+      return job;
+    }
+    return { id: jobId, status: 'assigned' };
+  }
   const result = await supabase
     .from('jobs')
     .update({
@@ -260,9 +349,11 @@ export async function assignDriver(jobId, driver) {
 /** Update job status */
 export async function updateJobStatus(jobCode, status) {
   if (isDemo()) {
-    const job = MOCK_DATA.jobs.find(j => j.job_code === jobCode);
+    const data = getMockData();
+    const job = data.jobs.find(j => j.job_code === jobCode);
     if (job) {
       job.status = status;
+      saveMockData(data);
       if (status === 'in_transit') startDemoGpsSimulation(jobCode);
       else if (status === 'delivered') stopDemoGpsSimulation(jobCode);
     }
@@ -286,11 +377,13 @@ function startDemoGpsSimulation(jobCode) {
     const lng = startLng + (Math.cos(step) * 0.01);
     
     // Trigger local listeners (simulating realtime subscription)
-    const job = MOCK_DATA.jobs.find(j => j.job_code === jobCode);
+    const data = getMockData();
+    const job = data.jobs.find(j => j.job_code === jobCode);
     if (job) {
       job.gps_lat = lat;
       job.gps_lng = lng;
       job.gps_updated_at = new Date().toISOString();
+      saveMockData(data);
     }
 
     // Call any active subscribers
@@ -315,11 +408,43 @@ export async function saveDocumentUrl(jobCode, field, url) {
     'invoice_pdf_url', 'epod_pdf_url', 'delivery_note_url', 'epod_photo_url'
   ];
   if (!allowed.includes(field)) throw new Error(`Invalid document field: ${field}`);
+  
+  if (isDemo()) {
+    const data = getMockData();
+    const job = data.jobs.find(j => j.job_code === jobCode);
+    if (job) {
+      job[field] = url;
+      saveMockData(data);
+    }
+    return { success: true };
+  }
   return updateJobStatus(jobCode, undefined, { [field]: url });
 }
 
 /** Client approves a quote */
 export async function clientApproveQuote(jobCode) {
+  if (isDemo()) {
+    const data = getMockData();
+    const rfq = data.rfqs.find(r => r.jobs.job_code === jobCode);
+    if (rfq) {
+      rfq.status = 'accepted';
+      
+      // Move from RFQs array into Jobs array so it shows up as an active job
+      const newJob = {
+        id: 'job-' + Math.random().toString(36).substring(7),
+        job_code: rfq.jobs.job_code,
+        status: 'accepted',
+        origin: rfq.jobs.origin,
+        destination: rfq.jobs.destination,
+        pickup_date: rfq.jobs.pickup_date,
+        quoted_price: rfq.vendor_price
+      };
+      data.jobs.unshift(newJob);
+      saveMockData(data);
+      return newJob;
+    }
+    return { id: 'dummy', job_code: jobCode, status: 'accepted' };
+  }
   const result = await supabase
     .from('jobs')
     .update({ status: 'accepted' })
@@ -331,6 +456,15 @@ export async function clientApproveQuote(jobCode) {
 
 /** Client declines a quote */
 export async function clientDeclineQuote(jobCode) {
+  if (isDemo()) {
+    const data = getMockData();
+    const rfq = data.rfqs.find(r => r.jobs.job_code === jobCode);
+    if (rfq) {
+      rfq.status = 'rejected';
+      saveMockData(data);
+    }
+    return { id: 'dummy', job_code: jobCode, status: 'rejected' };
+  }
   const result = await supabase
     .from('jobs')
     .update({ status: 'rejected' })
@@ -346,6 +480,17 @@ export async function clientDeclineQuote(jobCode) {
 
 /** Push driver GPS location — called every 10 seconds from driver.html */
 export async function pushGPS(jobCode, lat, lng) {
+  if (isDemo()) {
+    const data = getMockData();
+    const job = data.jobs.find(j => j.job_code === jobCode);
+    if (job) {
+      job.gps_lat = lat;
+      job.gps_lng = lng;
+      job.gps_updated_at = new Date().toISOString();
+      saveMockData(data);
+    }
+    return { success: true };
+  }
   const result = await supabase
     .from('jobs')
     .update({
@@ -388,6 +533,20 @@ export async function unsubscribe(channel) {
 
 /** Save driver ePOD signature and photo */
 export async function saveDriverEPOD(jobCode, { signatureB64, photoUrl, gpsLat, gpsLng }) {
+  if (isDemo()) {
+    const data = getMockData();
+    const job = data.jobs.find(j => j.job_code === jobCode);
+    if (job) {
+      job.status = 'epod_pending';
+      job.epod_driver_sig = signatureB64;
+      job.epod_photo_url = photoUrl;
+      job.epod_driver_at = new Date().toISOString();
+      job.epod_gps_lat = gpsLat;
+      job.epod_gps_lng = gpsLng;
+      saveMockData(data);
+    }
+    return { success: true };
+  }
   const result = await supabase
     .from('jobs')
     .update({
@@ -406,6 +565,17 @@ export async function saveDriverEPOD(jobCode, { signatureB64, photoUrl, gpsLat, 
 
 /** Save client ePOD signature — triggers invoice generation */
 export async function saveClientEPOD(jobCode, signatureB64) {
+  if (isDemo()) {
+    const data = getMockData();
+    const job = data.jobs.find(j => j.job_code === jobCode);
+    if (job) {
+      job.status = 'invoiced';
+      job.epod_client_sig = signatureB64;
+      job.epod_client_at = new Date().toISOString();
+      saveMockData(data);
+    }
+    return { success: true };
+  }
   const result = await supabase
     .from('jobs')
     .update({
@@ -425,13 +595,7 @@ export async function saveClientEPOD(jobCode, signatureB64) {
 
 /** Get all drivers for the current vendor */
 export async function getVendorDrivers() {
-  if (isDemo()) {
-    try {
-      const result = await supabase.from('vendor_drivers').select('*').eq('vendor_id', DEMO_VENDOR_ID).order('name');
-      if (result.data && result.data.length > 0) return result.data;
-    } catch (e) { /* fallback */ }
-    return MOCK_DATA.drivers;
-  }
+  if (isDemo()) return getMockData().drivers;
   const result = await supabase
     .from('vendor_drivers')
     .select('*')
@@ -442,15 +606,10 @@ export async function getVendorDrivers() {
 /** Add a new driver */
 export async function addDriver(driver) {
   if (isDemo()) {
-    const result = await supabase
-      .from('vendor_drivers')
-      .insert({ ...driver, vendor_id: DEMO_VENDOR_ID })
-      .select()
-      .single();
-    if (result.data) return result.data;
-    // fallback
-    const newDriver = { ...driver, id: 'd' + (MOCK_DATA.drivers.length + 1) };
-    MOCK_DATA.drivers.push(newDriver);
+    const data = getMockData();
+    const newDriver = { ...driver, id: 'd' + (data.drivers.length + 1) };
+    data.drivers.push(newDriver);
+    saveMockData(data);
     return newDriver;
   }
   const { data: { user } } = await supabase.auth.getUser();
