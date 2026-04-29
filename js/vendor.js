@@ -7,9 +7,8 @@ import { requireAuth, getCurrentVendorId, getCurrentVendorName, generateDriverTo
 import { generateQuotePDF } from '/js/pdf.js';
 import { openQuoteMessage, openDriverAssignMessage, openPaymentReminder, formatAED, buildDriverUrl } from '/js/whatsapp.js';
 
-// Module-level vendor identity — set once at boot, used everywhere
-const VENDOR_ID = getCurrentVendorId();
-const VENDOR_NAME = getCurrentVendorName();
+let VENDOR_ID = null;
+let VENDOR_NAME = null;
 
 let currentVendor = null;
 let currentTab = 'tab-rfqs';
@@ -23,6 +22,9 @@ async function init() {
     window.location.href = '/demo.html';
     return;
   }
+
+  VENDOR_ID = getCurrentVendorId();
+  VENDOR_NAME = getCurrentVendorName();
 
   try {
     currentVendor = await getVendorProfile();

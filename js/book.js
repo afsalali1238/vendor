@@ -9,7 +9,8 @@ import { createJobEnquiry, getVendorProfileById } from '/js/supabase.js';
 
 // ── INIT: Resolve vendor from URL ────────────────────────────────
 const params = new URLSearchParams(window.location.search);
-const VENDOR_ID = params.get('vendor') || params.get('v');
+const rawVendor = params.get('vendor') || params.get('v');
+const VENDOR_ID = (rawVendor && rawVendor !== 'null' && rawVendor !== 'undefined' && rawVendor.length > 10) ? rawVendor : null;
 
 if (!VENDOR_ID) {
   // No vendor param — hide form, show error

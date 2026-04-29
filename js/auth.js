@@ -5,21 +5,22 @@
 // ================================================================
 
 export function getCurrentVendorId() {
-  return localStorage.getItem('vendor_id');
+  const val = localStorage.getItem('vendor_id');
+  if (!val || val === 'null' || val === 'undefined') return null;
+  return val;
 }
 
 export function getCurrentVendorName() {
-  return localStorage.getItem('vendor_name');
+  const val = localStorage.getItem('vendor_name');
+  if (!val || val === 'null' || val === 'undefined') return 'Vendor';
+  return val;
 }
 
 export function requireVendorAuth() {
-  const vendorId = getCurrentVendorId();
-  if (!vendorId) {
-    // No session — show login modal on vendor.html, or redirect to demo
-    return null;
-  }
+  const id = getCurrentVendorId();
+  if (!id) return null;
   return {
-    id: vendorId,
+    id,
     phone: '+971501234567',
     user_metadata: { company_name: getCurrentVendorName() }
   };

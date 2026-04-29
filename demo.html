@@ -70,6 +70,8 @@
       const select = document.getElementById('vendor-select');
       const id = select.value;
       const name = select.options[select.selectedIndex].dataset.name;
+      localStorage.removeItem('vendor_id');
+      localStorage.removeItem('vendor_name');
       localStorage.setItem('vendor_id', id);
       localStorage.setItem('vendor_name', name);
       window.location.href = '/vendor.html';
