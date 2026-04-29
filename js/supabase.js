@@ -295,8 +295,26 @@ export async function getJobByCode(jobCode) {
     // Search across all vendors
     for (const vId in data.vendors) {
       const v = data.vendors[vId];
-      const job = v.jobs.find(j => j.job_code === jobCode) || v.rfqs.find(r => r.jobs.job_code === jobCode)?.jobs;
-      if (job) return job;
+      const jobFromJobs = v.jobs.find(j => j.job_code === jobCode) || null;
+      const rfq = v.rfqs.find(r => r.jobs?.job_code === jobCode) || null;
+      const rfqJob = rfq?.jobs || null;
+
+      if (!jobFromJobs && !rfqJob) continue;
+
+      // Demo: merge RFQ fields (client + service details) with the current job fields (status + driver + epod fields).
+      // This ensures track/receipt documents can render even in demo.
+      const merged = {
+        ...(rfqJob || {}),
+        ...(jobFromJobs || {}),
+        vendor_id: v.profile.id,
+        vendor: v.profile,
+        // Ensure quoted_price is present when available
+        quoted_price: jobFromJobs?.quoted_price ?? rfq?.vendor_price ?? rfqJob?.quoted_price ?? null,
+        // Prefer the latest job status (updated by updateJobStatus), fall back to RFQ status.
+        status: jobFromJobs?.status ?? rfq?.status ?? null
+      };
+
+      return merged;
     }
     return null;
   }

@@ -1,5 +1,5 @@
 import { getJobByCode, subscribeToGPS, saveClientEPOD } from '/js/supabase.js';
-import { generateInvoicePDF } from '/js/pdf.js';
+import { generateInvoicePDF, generateEPODPDF } from '/js/pdf.js';
 import { openInvoiceMessage, formatAED } from '/js/whatsapp.js';
 
 let jobData = null;
@@ -162,41 +162,32 @@ function updateStatusUI() {
 }
 
 function initMap() {
+  // MVP: GPS realtime is stubbed in demo mode.
+  // Show a static sample "tracking map" instead of initializing Leaflet.
   if (map) return;
   document.getElementById('map-container').style.display = 'block';
-  const lat = jobData.gps_lat || 25.2048;
-  const lng = jobData.gps_lng || 55.2708;
-  
-  map = L.map('map').setView([lat, lng], 13);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  // Custom truck icon
-  const truckIcon = L.divIcon({
-    className: 'custom-div-icon',
-    html: "<div style='background-color:#F59E0B; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 16px;'>🚛</div>",
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
-  });
-
-  marker = L.marker([lat, lng], {icon: truckIcon}).addTo(map);
+  document.getElementById('map').innerHTML = `
+    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+      <img
+        src="/track-sample-map.svg"
+        alt="Sample tracking map"
+        style="width: 100%; height: 100%; object-fit: cover; display: block;"
+      />
+    </div>
+  `;
+  map = true;
+  marker = null;
 }
 
 function updateMap() {
-  if (!map || !jobData.gps_lat || !jobData.gps_lng) return;
-  const latlng = [jobData.gps_lat, jobData.gps_lng];
-  marker.setLatLng(latlng);
-  map.panTo(latlng);
-
-  if (jobData.gps_updated_at) {
-    const diffMins = Math.floor((new Date() - new Date(jobData.gps_updated_at)) / 60000);
-    if (diffMins > 5) {
-      document.getElementById('gps-banner').style.display = 'block';
-      document.getElementById('gps-ago').innerText = diffMins;
-    } else {
-      document.getElementById('gps-banner').style.display = 'none';
-    }
+  // MVP: no real map updates, but we can still show "GPS lost" banner if data exists.
+  if (!jobData || !jobData.gps_updated_at) return;
+  const diffMins = Math.floor((new Date() - new Date(jobData.gps_updated_at)) / 60000);
+  if (diffMins > 5) {
+    document.getElementById('gps-banner').style.display = 'block';
+    document.getElementById('gps-ago').innerText = diffMins;
+  } else {
+    document.getElementById('gps-banner').style.display = 'none';
   }
 }
 
@@ -251,8 +242,33 @@ document.getElementById('btn-sign').addEventListener('click', async () => {
     // 1. Save signature
     await saveClientEPOD(jobData.job_code, signatureB64);
 
-    alert('Thank you! Your signature has been saved. The invoice will be generated.');
-    window.location.reload();
+    // 2. Generate + attach demo PDFs so download links appear immediately.
+    // Note: pdf.js uploads to Supabase Storage; in demo mode this returns demo URLs.
+    jobData.status = 'invoiced';
+    jobData.epod_client_sig = signatureB64;
+    jobData.epod_client_at = new Date().toISOString();
+    const vendor = jobData.vendor || null;
+    if (vendor) {
+      const telrPaymentUrl = `https://telr.com/pay/${jobData.job_code}`; // Optional for invoice PDF rendering
+      try {
+        const invoiceRes = await generateInvoicePDF(jobData, vendor, telrPaymentUrl);
+        jobData.invoice_pdf_url = invoiceRes.url;
+
+        const epodRes = await generateEPODPDF(jobData, vendor, {
+          driverSigB64: jobData.epod_driver_sig,
+          clientSigB64: signatureB64,
+          photoUrl: jobData.epod_photo_url,
+          driverGPS: { lat: jobData.epod_gps_lat, lng: jobData.epod_gps_lng }
+        });
+        jobData.epod_pdf_url = epodRes.url;
+      } catch (pdfErr) {
+        // Keep flow working even if PDF generation fails (links may remain hidden).
+        console.error('[Track] PDF generation failed:', pdfErr);
+      }
+    }
+
+    updateStatusUI();
+    alert('Thank you! Your signature has been saved. You can download your documents now.');
 
   } catch (err) {
     console.error(err);

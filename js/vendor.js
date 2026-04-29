@@ -337,6 +337,33 @@ async function refreshRFQs() {
         el.appendChild(form);
       }
 
+      // Links row: tracking + client approve link
+      if (rfq.status === 'quoted' || rfq.status === 'accepted') {
+        const linksRow = document.createElement('div');
+        linksRow.style.cssText = 'display:flex; gap:0.75rem; align-items:center; margin-top:0.75rem; padding:0.5rem; background:var(--surf2); border-radius:var(--radius);';
+        const trackUrl = window.location.origin + '/track.html?job=' + job.job_code;
+        const approveUrl = window.location.origin + '/approve.html?job=' + job.job_code;
+        const linkA = document.createElement('a');
+        linkA.href = trackUrl; linkA.target = '_blank';
+        linkA.style.cssText = 'color:var(--teal); font-size:0.8rem; text-decoration:none;';
+        linkA.textContent = '📍 Track';
+        linksRow.appendChild(linkA);
+        const sep = document.createElement('span');
+        sep.style.color = 'var(--border)'; sep.textContent = '|';
+        linksRow.appendChild(sep);
+        const linkB = document.createElement('a');
+        linkB.href = approveUrl; linkB.target = '_blank';
+        linkB.style.cssText = 'color:var(--gold); font-size:0.8rem; text-decoration:none;';
+        linkB.textContent = '📄 Client Approve Link';
+        linksRow.appendChild(linkB);
+        const copyBtn = document.createElement('button');
+        copyBtn.style.cssText = 'background:none; border:1px solid var(--border); color:var(--text2); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; cursor:pointer; margin-left:auto;';
+        copyBtn.textContent = 'Copy';
+        copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(approveUrl); copyBtn.textContent = '✓'; setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500); });
+        linksRow.appendChild(copyBtn);
+        el.appendChild(linksRow);
+      }
+
       // Quoted RFQs: show Approve + Decline buttons
       if (rfq.status === 'quoted') {
         const row = document.createElement('div');
